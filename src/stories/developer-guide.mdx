@@ -1,0 +1,118 @@
+{/* introduction.mdx */}
+import { Meta, Title, Subtitle, Description } from '@storybook/addon-docs/blocks';
+
+<Meta title="Developer Guide" />
+
+## API Goals (TODO - finalize and explain better)
+
+- As little code as possible on the implemenation side, while still being flexible and extensible.
+  - We can handle beefy components with good tests. Ofc. this is a balance, but we err on the side of utility built into the component rather than pushing complexity onto the users tooling and software. By doing this we make tooling easier, reduce lines of code and maintanence of the users code.
+- this means both data-driven and composable APIs (see below)
+- shortcut props?
+- multi-responsibility is okay, e.g. checkbox has optional label and description
+
+## When to make a new component?
+
+In Matter, our component architecture is built around function. Components are chosen based on their behavior and purpose—for example, Button triggers actions, icon buttons are a kind of Button that uses an icon instead of text.
+
+## Atomic Components and Dependencies
+
+Matter components should be layered, with strict dependency direction:
+
+- **Primitives (atomic):** foundational building blocks like `MtButton`, `MtDivider`, `MtInput`. They own baseline behavior and style contracts.
+- **Composites:** composed from primitives and/or headless libraries (for example, `MtMenu`, `MtDropdown`, `MtSelect`). They should prefer wiring primitives together over re-implementing primitive behavior.
+- **Feature components/pages:** can depend on composites and primitives, but should not create ad-hoc design tokens or bypass the shared API.
+
+Dependency rules:
+
+- Primitives should not import composites.
+- Composites may import primitives.
+- Composite subcomponents should reference primitives directly when semantics match (for example, `MtMenu.Button` wraps `MtButton`, `MtMenu.Divider` references `MtDivider`).
+- If a composite needs a custom container (for instance menu surfaces), inject it via props rather than duplicating a parallel implementation.
+
+## Kind and Variant
+
+Variant is a styling option that changes the appearance of a component while maintaining its core functionality. For example, a "ghost" variant might have a transparent background and a border, while the "default" variant has a solid background.
+
+Kind, on the other hand, is used to denote a different type of component that serves a distinct purpose. For instance, an "icon" kind of button is designed to contain an icon and may have different styling and behavior compared to a regular button.
+
+## Standardized Props
+
+The following props share a common definition and MUST not be used for any other purpose.
+
+- `kind`: A string that denotes a specific kind of component. For example, `icon` is a kind of button that is meant to contain an icon and has different styling and possibly behavior compared to a regular button.
+- `variant`: A string that denotes a stylistic variant of a component. For example, `ghost` is a minimal styling variant that typically has a transparent background while, while `default` has a solid background, and `accent` might have a background color that stands out.
+- `size`: A string that denotes the size of a component, such as `small`, `medium`, or `large`. The specific sizes available may vary by component.
+- `disabled`: A boolean that indicates whether the component is disabled. Disabled components are typically non-interactive and styled to indicate their disabled state.
+- `spacing`: Amount of space in (pixels or rem idk?) between items.
+- `tooltip`: A string that provides additional information about the component. (TODO: support for Button)
+
+## Composable and Data-Driven
+
+Matter, we intentionally support both composable and data-driven component APIs. This is not duplication, it is a design choice.
+A composable API exposes structure through children:
+
+```tsx
+<MySelect>
+  <MySelect.Option value="1">One</MySelect.Option>
+  <MySelect.Option value="2">Two</MySelect.Option>
+</MySelect>
+```
+
+A data-driven API expresses the same intent through configuration:
+
+```tsx
+<MySelect
+  options={[
+    { value: '1', label: 'One' },
+    { value: '2', label: 'Two' },
+  ]}
+/>
+```
+
+Both patterns solve different problems.
+
+Composable APIs optimize for flexibility and longevity. They allow arbitrary structure, richer content, grouping, icons, async states, and future extensibility without changing the contract. This model is common in modern headless systems such as Radix UI.
+
+Data-driven APIs optimize for clarity and speed. They are ideal when rendering simple data from an API or building straightforward forms. They reduce boilerplate and improve readability when customization is unnecessary.
+
+Our philosophy is:
+
+- Use composable APIs as the architectural foundation.
+- Provide data-driven APIs as ergonomic convenience layers.
+- Ensure both approaches map to the same underlying behavior.
+
+We do not treat one as “correct” and the other as “legacy.” Matter is built for real-world software where both extensibility and productivity matter.
+
+## HTML Usage (TODO)
+
+Do we prefer to use sematic HTML or classes on div?
+
+There is also the question of we want to be consistent with native HTML properties, or more consistent with our own API. For example, for checkboxes, do we want to use `checked` or `value`? `checked` is more consistent with native HTML, but `value` is more consistent with our other components. Maybe we can support both? If `value` is provided, it takes precedence over `checked`.
+
+## Terms (TODO)
+
+We need to standardize this more:
+
+- triggers
+- name, value and label
+- title, subtitle, description, content
+- options, items, entry, data, avatars (for avatar group)
+
+## Value and defaults (TODO)
+
+- Should inputs store value internally be default? Like should MtCheckbox work without a value passed in?
+
+## Icons, naming and color, system structure (TODO)
+
+- Should we name like MtBacklogIcon or MtDashedCircleIcon?
+- Also should we suffix with icons?
+- Should items be colored?
+- Should we use icon aliases for color + shape combos liek MtErrorIcon, MtWarningIcon, MtSuccessIcon, etc.?
+
+## Known refactors
+
+- ~~**We want to have a few, beefy single-responsibility easy to test components with lots of features (MtPopover + MtMenu, not multiple implementations MtSelect, MtDropdown, MtContextMenu)**~~
+- ~~Dropdown and Select needs to take a MtMenu as prop.~~
+- ~~Dropdown and Select should use MtPopover, then drop support for radix dropdown and select.~~ Apparently, nobody does this because select and dropdown has diffrent ARIA requirements.
+- Filter and sort should use MtMenu

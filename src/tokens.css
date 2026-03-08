@@ -1,0 +1,131 @@
+/**
+ * THIS FILE IS AUTO-GENERATED. DO NOT EDIT DIRECTLY!
+ *
+ * To update tokens, replace 'tokens/tokens.dark.json' with a new JSON export
+ * from Figma's Variables window: right click -> Export modes
+ * Then run: npm run gen:tokens
+ * 
+ * For relevant Tailwind docs regarding costomizing colors, see:
+ * https://tailwindcss.com/docs/colors#customizing-your-colors
+ */
+
+@theme {
+  /* Primitive tokens */
+  --color-neutral-50: var(--color-missing);
+  --color-neutral-100: var(--color-missing);
+  --color-neutral-200: var(--color-missing);
+  --color-neutral-300: var(--color-missing);
+  --color-neutral-400: var(--color-missing);
+  --color-neutral-500: var(--color-missing);
+  --color-neutral-600: var(--color-missing);
+  --color-neutral-700: var(--color-missing);
+  --color-neutral-800: var(--color-missing);
+  --color-neutral-900: var(--color-missing);
+  --color-neutral-950: #111111;
+
+  --color-blue-50: var(--color-missing);
+  --color-blue-100: var(--color-missing);
+  --color-blue-200: var(--color-missing);
+  --color-blue-300: var(--color-missing);
+  --color-blue-400: var(--color-missing);
+  --color-blue-500: #4780fa;
+  --color-blue-600: var(--color-missing);
+  --color-blue-700: var(--color-missing);
+  --color-blue-800: var(--color-missing);
+  --color-blue-900: var(--color-missing);
+  --color-blue-950: var(--color-missing);
+
+  --color-red-50: var(--color-missing);
+  --color-red-100: var(--color-missing);
+  --color-red-200: var(--color-missing);
+  --color-red-300: var(--color-missing);
+  --color-red-400: var(--color-missing);
+  --color-red-500: #f55050;
+  --color-red-600: var(--color-missing);
+  --color-red-700: var(--color-missing);
+  --color-red-800: var(--color-missing);
+  --color-red-900: var(--color-missing);
+  --color-red-950: var(--color-missing);
+
+  --color-green-50: var(--color-missing);
+  --color-green-100: var(--color-missing);
+  --color-green-200: var(--color-missing);
+  --color-green-300: var(--color-missing);
+  --color-green-400: var(--color-missing);
+  --color-green-500: #2fe369;
+  --color-green-600: var(--color-missing);
+  --color-green-700: var(--color-missing);
+  --color-green-800: var(--color-missing);
+  --color-green-900: var(--color-missing);
+  --color-green-950: var(--color-missing);
+
+  --color-orange-50: var(--color-missing);
+  --color-orange-100: var(--color-missing);
+  --color-orange-200: var(--color-missing);
+  --color-orange-300: var(--color-missing);
+  --color-orange-400: var(--color-missing);
+  --color-orange-500: #efaa2d;
+  --color-orange-600: var(--color-missing);
+  --color-orange-700: var(--color-missing);
+  --color-orange-800: var(--color-missing);
+  --color-orange-900: var(--color-missing);
+  --color-orange-950: var(--color-missing);
+
+  /* Semantic tokens */
+  --color-surface-base: #111111;
+  --color-surface-subtle: #151515;
+  --color-surface-panel: #191919;
+  --color-surface-elevated: #202020;
+  --color-surface-popover: #262626;
+  --color-surface-overlay: var(--color-missing);
+  --color-surface-overlay-muted: var(--color-missing);
+  --color-surface-scrim: var(--color-missing);
+
+  --color-border-default: #292929;
+  --color-border-subtle: var(--color-missing);
+
+  --color-text-primary: #666666;
+  --color-text-secondary: var(--color-missing);
+  --color-text-muted: var(--color-missing);
+  --color-text-disabled: var(--color-missing);
+  --color-text-link: var(--color-missing);
+  --color-text-link-hover: var(--color-missing);
+  --color-text-link-visited: var(--color-missing);
+
+  --color-missing: #ff00e5;
+
+  --color-status-success: var(--color-green-500);
+  --color-status-info: var(--color-blue-500);
+  --color-status-warning: var(--color-orange-500);
+  --color-status-danger: var(--color-red-500);
+
+  /* Component tokens */
+  --color-input-base-background-default: var(--color-surface-base);
+  --color-input-base-background-hover: #262626;
+  --color-input-base-background-focus: #262626;
+  --color-input-base-background-active: #262626;
+  --color-input-base-background-disabled: #707070;
+  --color-input-base-background-selected: #262626;
+  --color-input-accent-background-default: #2e55c9;
+  --color-input-accent-background-hover: #4780fa;
+  --color-input-accent-background-focus: #4780fa;
+  --color-input-accent-background-active: #4780fa;
+  --color-input-accent-background-disabled: #4a67a7;
+  --color-input-accent-background-selected: #5a6ca3;
+  --color-input-border-default: var(--color-missing);
+  --color-input-border-hover: var(--color-missing);
+  --color-input-border-focus: var(--color-missing);
+  --color-input-border-error: var(--color-missing);
+  --color-input-border-disabled: var(--color-missing);
+  --color-input-ring-focus: var(--color-status-info);
+  --color-input-ring-error: var(--color-status-danger);
+  --color-input-content-default: #a9a9a9;
+  --color-input-content-placeholder: #676767;
+  --color-input-content-disabled: #5e5e5e;
+  --color-input-base-border: #292929;
+  --color-input-base-border-hover: #3a3a3a;
+
+  --color-dialog-base-backdrop: var(--color-missing);
+  --color-dialog-base-surface: var(--color-missing);
+  --color-dialog-base-border: var(--color-missing);
+}

@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Inika:wght@400;700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inika:wght@400;700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import 'tailwindcss';
+@import './tokens.css';
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /** Font Families (docs: https://tailwindcss.com/docs/font-family) */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: var(--color-white);
+    background: var(--color-surface-base);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    color: var(--color-surface-base);
+    background: var(--color-white);
+  }
+}
+
+/**
+  * Custom utilities.
+  */
+
+/**
+ * Text variants 
+ */
+
+/** mt-text-default: A utility for default body text. */
+@utility mt-text-default {
+  @apply text-base;
+  color: var(--color-text-secondary);
+}
+
+/** mt-text-caption: A utility for small, supporting text such as captions, labels, and metadata. */
+@utility mt-text-caption {
+  @apply text-sm;
+  color: var(--color-text-subtle);
+}
+
+/**
+  * Input variants (buttons, form fields, etc.)
+  *
+  * - mt-layout-input-{size}: A utility for input sizes and spacing.
+  * - mt-surface-input-{variant}: A utility for surface variants.
+  */
+
+@utility mt-layout-input-medium {
+  @apply px-[12px] h-[24px] text-base h-10;
+}
+@utility mt-layout-input-large {
+  @apply px-[12px] h-[32px] text-base h-12;
+}
+
+@utility mt-surface-input-default {
+  @apply text-base border select-none;
+  @apply bg-input-base-background-default border-border-default text-input-content-default;
+  @apply hover:bg-input-base-background-hover/75;
+  @apply focus:ring-border-default/75;
+  @apply active:bg-input-base-background-active/50 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply disabled:bg-input-base-background-disabled/50 disabled:border-border-default/50 disabled:text-input-content-disabled;
+}
+
+@utility mt-surface-input-accent {
+  @apply text-base border-none select-none;
+  @apply bg-input-accent-background-default text-white;
+  @apply hover:bg-input-accent-background-hover;
+  @apply focus:ring-input-ring-focus;
+  @apply active:bg-input-accent-background-active focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply disabled:bg-input-accent-background-disabled disabled:text-input-content-disabled;
+}
+
+@utility mt-surface-input-ghost {
+  @apply text-base border-none select-none;
+  @apply bg-transparent text-input-content-default;
+  @apply hover:bg-transparent;
+  @apply focus:ring-border-default/75;
+  @apply active:bg-transparent focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply disabled:bg-transparent disabled:text-input-content-disabled;
+}
+
+@utility mt-surface-panel {
+	@apply bg-surface-panel;
+	@apply rounded;
+	@apply text-text-primary;
+}
+
+/**
+ * HTML component variant overrides and custom utilities.
+ */
+
+html {
+  /* 1 rem = 14px */
+  font-size: 14px;
+  line-height: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+dialog {
+  margin: auto;
+}
+
+dialog::backdrop {
+  background-color: var(--color-dialog-default-backdrop-default);
+}
+
+small {
+  @apply mt-text-caption;
+}
+
+/**
+ * Docs editor link styling overrides.
+ */
+.docs-page .bn-editor a {
+  @apply underline underline-offset-2;
+  color: var(--color-text-link);
+}
+
+.docs-page .bn-editor a:hover {
+  color: var(--color-text-link-hover);
+}
+
+.docs-page .bn-editor a:visited {
+  color: var(--color-text-link-visited);
+}
+
+.docs-page .bn-mention {
+  @apply rounded px-1.5 py-0.5;
+  background-color: var(--color-docs-mention-background-default);
+  color: var(--color-docs-mention-label-default);
+}
+
+.docs-page .bn-suggestion-menu-item {
+  height: 40px;
+  padding: 4px 8px;
+}
+
+.docs-page .bn-mt-suggestion-menu-item-section[data-position='left'] {
+  padding: 0;
+  background: transparent;
+}
+
+.docs-page .docs-mention-avatar {
+  @apply flex h-6 w-6 items-center justify-center overflow-hidden rounded-full text-[11px];
+  background-color: var(--color-surface-popover);
+  color: var(--color-text-secondary);
+}
+
+.docs-page .docs-mention-avatar img {
+  @apply h-full w-full object-cover;
+}
+
+.docs-page .bn-editor h1 {
+  @apply text-4xl;
+}
+
+.docs-page .bn-editor h2 {
+  @apply text-3xl;
+}
+
+.docs-page .bn-editor h3 {
+  @apply text-2xl;
+}
+
+.docs-page .bn-editor h4 {
+  @apply text-xl;
+}
+
+.docs-page .bn-editor h5 {
+  @apply text-lg;
+}
