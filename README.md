@@ -1,6 +1,6 @@
 # Helm (Matter Design System)
 
-This package contains the Matter design system and Storybook site extracted from `anchor`.
+This package contains the Matter design system and Storybook site extracted from `anchor`. 
 
 ## Commands
 
