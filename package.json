@@ -1,5 +1,5 @@
 {
-  "name": "@khaos/matter",
+  "name": "@khaos/helm",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -15,11 +15,13 @@
       "import": "./dist/matter.js",
       "require": "./dist/matter.cjs"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
+    "prepare": "npm run build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "gen:tokens": "node tokens/gen-tokens.mjs"

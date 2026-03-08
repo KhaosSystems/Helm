@@ -7,6 +7,6 @@
     "rootDir": "src",
     "noEmit": false
   },
-  "include": ["src/lib.ts", "src/components/matter/**/*.ts", "src/components/matter/**/*.tsx"],
+  "include": ["src/lib.ts", "src/vite-env.d.ts", "src/components/matter/**/*.ts", "src/components/matter/**/*.tsx"],
   "exclude": ["src/**/*.stories.tsx"]
 }

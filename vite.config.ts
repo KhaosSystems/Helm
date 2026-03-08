@@ -14,10 +14,12 @@ export default defineConfig({
     },
   },
   build: {
+    emptyOutDir: false,
     lib: {
       entry: path.resolve(__dirname, 'src/lib.ts'),
       name: 'Matter',
       fileName: (format) => (format === 'es' ? 'matter.js' : 'matter.cjs'),
+      cssFileName: 'styles',
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
@@ -26,12 +28,6 @@ export default defineConfig({
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
-        },
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'style.css') {
-            return 'styles.css';
-          }
-          return 'assets/[name]-[hash][extname]';
         },
       },
     },
