@@ -40,6 +40,7 @@
     "publish": "npm publish --access public",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test-storybook": "vitest --project=storybook",
     "gen:tokens": "node tokens/gen-tokens.mjs"
   },
   "dependencies": {
