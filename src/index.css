@@ -80,9 +80,9 @@
 @utility mt-surface-input-ghost {
   @apply text-base border-none select-none;
   @apply bg-transparent text-input-content-default;
-  @apply hover:bg-transparent;
+  @apply hover:bg-surface-popover;
   @apply focus:ring-border-default/75;
-  @apply active:bg-transparent focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply active:bg-surface-popover focus:outline-none focus:ring-2 focus:ring-offset-2;
   @apply disabled:bg-transparent disabled:text-input-content-disabled;
 }
 
