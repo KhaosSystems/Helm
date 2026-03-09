@@ -86,7 +86,7 @@
 
   --color-text-primary: #CACACA;
   --color-text-secondary: var(--color-missing);
-  --color-text-muted: var(--color-missing);
+  --color-text-muted: #676767;
   --color-text-disabled: var(--color-missing);
   --color-text-link: var(--color-missing);
   --color-text-link-hover: var(--color-missing);

@@ -44,12 +44,12 @@ export function MtCheckbox({
         />
 
         <span
-          className={`pointer-events-none inline-flex h-[14px] w-[14px] items-center justify-center rounded-[3px] border text-[10px] transition-colors ${
+          className={`pointer-events-none inline-flex h-[14px] w-[14px] items-center justify-center rounded-[3px] text-[10px] transition-colors ${
             invalid
-              ? 'border-red-500 bg-red-500/15 text-red-300'
+              ? 'border border-red-500 bg-red-500/15 text-status-danger'
               : checked || intermediate
-                ? 'border-blue-500 bg-blue-500 text-neutral-100'
-                : 'border-neutral-500 bg-neutral-900/60 text-transparent'
+                ? 'mt-surface-input-accent border border-input-accent-background-default text-white'
+                : 'mt-surface-input-default text-transparent'
           } ${disabled ? 'opacity-45' : ''}`}
         >
           {(checked || intermediate) && indicator}
@@ -59,9 +59,9 @@ export function MtCheckbox({
       {(label || description) && (
         <span className="flex min-w-0 flex-col">
           {label && (
-            <span className={`text-sm leading-5 ${disabled ? 'text-neutral-500' : 'text-neutral-200'}`}>{label}</span>
+            <span className={`text-sm leading-5 ${disabled ? '' : 'text-text-primary'}`}>{label}</span>
           )}
-          {description ? <span className="text-xs text-neutral-500">{description}</span> : null}
+          {description ? <span className="text-xs text-text-muted">{description}</span> : null}
         </span>
       )}
     </label>
