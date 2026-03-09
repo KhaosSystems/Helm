@@ -16,9 +16,12 @@ export default defineConfig({
   build: {
     emptyOutDir: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/lib.ts'),
+      entry: {
+        matter: path.resolve(__dirname, 'src/lib.ts'),
+        experimental: path.resolve(__dirname, 'src/experimental.ts'),
+      },
       name: 'Matter',
-      fileName: (format) => (format === 'es' ? 'matter.js' : 'matter.cjs'),
+      fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
       cssFileName: 'styles',
       formats: ['es', 'cjs'],
     },
