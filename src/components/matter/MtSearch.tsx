@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react';
 import { ChangeEvent, InputHTMLAttributes, useRef, useState } from 'react';
+import { MtButton } from './MtButton';
 
 interface MtSearchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'variant' | 'type'> {
   size?: 'medium' | 'large';
@@ -52,7 +53,7 @@ export function MtSearch({
     <div
       className={`relative pl-2 ${baseClasses} ${layoutClasses[size]} ${surfaceClasses[variant]} ${className || ''}`}
     >
-      <Search className={`${iconSizeClass} shrink-0 text-neutral-500`} aria-hidden="true" />
+      <Search className={`${iconSizeClass} shrink-0`} aria-hidden="true" />
       <input
         {...props}
         ref={inputRef}
@@ -63,14 +64,16 @@ export function MtSearch({
         className="w-full min-w-24 bg-transparent outline-none"
       />
       {value.length > 0 && (
-        <button
-          type="button"
+        <MtButton
+          kind="icon"
+          size={size}
+          variant="ghost"
           onClick={clear}
-          className="absolute right-2 shrink-0 rounded p-0.5 text-neutral-500 hover:bg-neutral-700/40 hover:text-neutral-200"
+          className="absolute right-2 shrink-0 w-5! h-5!"
           aria-label="Clear search"
         >
           <X className={iconSizeClass} />
-        </button>
+        </MtButton>
       )}
     </div>
   );
