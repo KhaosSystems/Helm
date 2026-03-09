@@ -18,7 +18,7 @@ export function MtDropdownItem({
 }: React.ComponentPropsWithoutRef<typeof DropdownMenu.Item>) {
   return (
     <DropdownMenu.Item
-      className={`flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm text-neutral-100 outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 data-highlighted:bg-neutral-700/60 ${className || ''}`}
+      className={`mt-surface-input-ghost data-highlighted:bg-surface-popover flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 ${className || ''}`}
       {...props}
     >
       {children}
@@ -92,10 +92,9 @@ const MtDropdownBase = ({
         <DropdownMenu.Content
           sideOffset={5}
           side="bottom"
-          className="z-50 min-w-48 rounded-lg border border-neutral-700/60 bg-neutral-900/95 p-1.5 shadow-2xl"
+          className="mt-surface-menu z-50 min-w-48 rounded-lg border p-1.5 shadow-2xl"
         >
           {dropdownItems}
-          {/* <DropdownMenu.Arrow className="fill-neutral-700/50" /> */}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

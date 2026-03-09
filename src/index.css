@@ -113,6 +113,19 @@
   @apply text-text-primary;
 }
 
+@utility mt-surface-popover {
+  @apply bg-surface-popover;
+  @apply rounded;
+  @apply text-text-primary;
+}
+
+@utility mt-surface-menu {
+  @apply bg-surface-base;
+  @apply border border-border-default;
+  @apply rounded;
+  @apply text-text-primary;
+}
+
 /**
  * HTML component variant overrides and custom utilities.
  */
