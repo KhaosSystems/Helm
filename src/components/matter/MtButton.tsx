@@ -33,7 +33,7 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
     };
 
     const baseClasses =
-      'flex items-center gap-2 rounded transition-all duration-150 focus:ring-offset-neutral-900 focus:outline-none';
+      'flex items-center gap-2 rounded transition-all duration-150';
 
     const layoutClasses = kind === 'icon' ? iconKindClasses[size] : defaultLayoutClasses[size];
 

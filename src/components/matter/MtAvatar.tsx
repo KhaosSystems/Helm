@@ -37,7 +37,7 @@ export default function MtAvatar({ src, alt, name, initials, size = 'sm', classN
   const fallbackInitials = useMemo(() => resolveInitials(initials ?? name ?? alt), [alt, initials, name]);
 
   const rootClasses = [
-    'inline-flex rounded-full shrink-0 select-none items-center justify-center overflow-hidden bg-neutral-700 text-white',
+    'inline-flex rounded-full shrink-0 select-none items-center justify-center overflow-hidden bg-surface-popover text-white',
     sizeClasses[size],
     className,
   ]

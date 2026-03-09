@@ -59,12 +59,27 @@
   @apply px-[12px] h-[32px] text-base h-12;
 }
 
+@utility mt-ring-input-default {
+  @apply focus:ring-border-default/75;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-base;
+}
+
+@utility mt-ring-input-accent {
+  @apply focus:ring-input-ring-focus;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-base;
+}
+
+@utility mt-ring-input-error {
+  @apply focus:ring-input-ring-error;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-base;
+}
+
 @utility mt-surface-input-default {
   @apply text-base border select-none;
   @apply bg-input-base-background-default border-border-default text-input-content-default;
   @apply hover:bg-input-base-background-hover/75;
-  @apply focus:ring-border-default/75;
-  @apply active:bg-input-base-background-active/50 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply mt-ring-input-default;
+  @apply active:bg-input-base-background-active/50;
   @apply disabled:bg-input-base-background-disabled/50 disabled:border-border-default/50 disabled:text-input-content-disabled;
 }
 
@@ -72,8 +87,8 @@
   @apply text-base border-none select-none;
   @apply bg-input-accent-background-default text-white;
   @apply hover:bg-input-accent-background-hover;
-  @apply focus:ring-input-ring-focus;
-  @apply active:bg-input-accent-background-active focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply mt-ring-input-accent;
+  @apply active:bg-input-accent-background-active;
   @apply disabled:bg-input-accent-background-disabled disabled:text-input-content-disabled;
 }
 
@@ -81,8 +96,8 @@
   @apply text-base border-none select-none;
   @apply bg-transparent text-input-content-default;
   @apply hover:bg-surface-popover;
-  @apply focus:ring-border-default/75;
-  @apply active:bg-surface-popover focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply mt-ring-input-default;
+  @apply active:bg-surface-popover;
   @apply disabled:bg-transparent disabled:text-input-content-disabled;
 }
 
