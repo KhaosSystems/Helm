@@ -3,7 +3,7 @@ import './index.css';
 export { MtButton } from './components/matter/MtButton';
 export { MtCheckbox } from './components/matter/MtCheckbox';
 export { MtContextMenu, WithContextMenu } from './components/matter/MtContextMenu';
-export { MtDialog } from './components/matter/MtDialog';
+export { MtDialog, MtDialogClose } from './components/matter/MtDialog';
 export { MtDivider } from './components/matter/MtDivider';
 export { MtDropdown, MtDropdownItem } from './components/matter/MtDropdown';
 export { MtFilterDropdown } from './components/matter/MtFilter';
