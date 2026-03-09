@@ -32,6 +32,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
     "prepare": "npm run build",
+    "publish": "npm publish --access public",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "gen:tokens": "node tokens/gen-tokens.mjs"
