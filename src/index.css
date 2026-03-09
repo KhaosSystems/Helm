@@ -92,6 +92,12 @@
 	@apply text-text-primary;
 }
 
+@utility mt-surface-elevated {
+  @apply bg-surface-elevated;
+  @apply rounded;
+  @apply text-text-primary;
+}
+
 /**
  * HTML component variant overrides and custom utilities.
  */

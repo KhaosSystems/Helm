@@ -17,49 +17,44 @@ const severityConfig: Record<
     icon: typeof CheckCircle2;
     iconClassName: string;
     borderClassName: string;
-    backgroundClassName: string;
   }
 > = {
   success: {
     icon: CheckCircle2,
-    iconClassName: 'text-emerald-300',
-    borderClassName: 'border-emerald-400/40',
-    backgroundClassName: 'bg-emerald-500/10',
+    iconClassName: 'text-status-success',
+    borderClassName: 'border-status-success',
   },
   info: {
     icon: Info,
-    iconClassName: 'text-blue-300',
-    borderClassName: 'border-blue-400/40',
-    backgroundClassName: 'bg-blue-500/10',
+    iconClassName: 'text-status-info',
+    borderClassName: 'border-status-info',
   },
   warning: {
     icon: CircleAlert,
-    iconClassName: 'text-amber-300',
-    borderClassName: 'border-amber-400/40',
-    backgroundClassName: 'bg-amber-500/10',
+    iconClassName: 'text-status-warning',
+    borderClassName: 'border-status-warning',
   },
   error: {
     icon: CircleX,
-    iconClassName: 'text-red-300',
-    borderClassName: 'border-red-400/40',
-    backgroundClassName: 'bg-red-500/10',
+    iconClassName: 'text-status-danger',
+    borderClassName: 'border-status-danger',
   },
 };
 
 export function MtAlert({ title, content, severity = 'info', actions, className }: MtAlertProps) {
-  const { icon: Icon, iconClassName, borderClassName, backgroundClassName } = severityConfig[severity];
+  const { icon: Icon, iconClassName, borderClassName } = severityConfig[severity];
 
   return (
     <div
       role="alert"
-      className={`rounded-xl border p-3 backdrop-blur-sm ${borderClassName} ${backgroundClassName} ${className || ''}`}
+      className={`mt-surface-elevated p-3 border-2 ${borderClassName} ${className || ''}`}
     >
       <div className="flex items-start gap-3">
         <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${iconClassName}`} />
 
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-neutral-100">{title}</div>
-          <div className="mt-1 text-sm text-neutral-200">{content}</div>
+          <div className="text-sm font-semibold">{title}</div>
+          <div className="mt-1 text-sm">{content}</div>
 
           {actions && <div className="mt-3">{actions}</div>}
         </div>
