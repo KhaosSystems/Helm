@@ -44,8 +44,15 @@ The following props share a common definition and MUST not be used for any other
 - `variant`: A string that denotes a stylistic variant of a component. For example, `ghost` is a minimal styling variant that typically has a transparent background while, while `default` has a solid background, and `accent` might have a background color that stands out.
 - `size`: A string that denotes the size of a component, such as `small`, `medium`, or `large`. The specific sizes available may vary by component.
 - `disabled`: A boolean that indicates whether the component is disabled. Disabled components are typically non-interactive and styled to indicate their disabled state.
+- `selected`: A boolean state prop for selectable controls (for example tree rows). This should map to `data-selected="true"` on the rendered element.
 - `spacing`: Amount of space in (pixels or rem idk?) between items.
 - `tooltip`: A string that provides additional information about the component. (TODO: support for Button)
+
+### State Styling Standard
+
+- Use data attributes for UI state styling in utilities.
+- For selected state, use `data-[selected]:...` utility variants.
+- Do not create dedicated one-off selected surface utilities when a standard input surface utility can consume `data-selected`.
 
 ## Composable and Data-Driven
 

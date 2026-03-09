@@ -38,7 +38,7 @@ export const Default: Story = {
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        <div className="text-xs uppercase tracking-wide text-neutral-500">Single rule</div>
+        <div className="text-xs uppercase tracking-wide">Single rule</div>
         <MtSortDropdown title="Sort" value={value} onChange={setValue} fields={fields} />
       </div>
     );
@@ -56,7 +56,7 @@ export const IconTrigger: Story = {
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        <div className="text-xs uppercase tracking-wide text-neutral-500">Icon trigger</div>
+        <div className="text-xs uppercase tracking-wide">Icon trigger</div>
         <MtSortDropdown
           title="Sort"
           value={value}
@@ -82,7 +82,7 @@ export const MultipleRules: Story = {
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        <div className="text-xs uppercase tracking-wide text-neutral-500">Multiple rules</div>
+        <div className="text-xs uppercase tracking-wide">Multiple rules</div>
         <MtSortDropdown title="Sort" value={value} onChange={setValue} fields={fields} />
       </div>
     );

@@ -85,7 +85,7 @@ export const Default: Story = {
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        <div className="text-xs uppercase tracking-wide text-neutral-500">Simple</div>
+        <div className="text-xs uppercase tracking-wide">Simple</div>
         <MtFilterDropdown title="Filter" value={value} onChange={setValue} fields={fields} operators={operators} />
       </div>
     );
@@ -104,7 +104,7 @@ export const IconTrigger: Story = {
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        <div className="text-xs uppercase tracking-wide text-neutral-500">Icon trigger</div>
+        <div className="text-xs uppercase tracking-wide">Icon trigger</div>
         <MtFilterDropdown
           title="Filter"
           value={value}
@@ -132,7 +132,7 @@ export const Advanced: Story = {
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        <div className="text-xs uppercase tracking-wide text-neutral-500">Advanced</div>
+        <div className="text-xs uppercase tracking-wide">Advanced</div>
         <MtFilterDropdown
           title="Advanced"
           value={value}

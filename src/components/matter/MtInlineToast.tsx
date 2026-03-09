@@ -70,10 +70,10 @@ export function MtInlineToast({
           sideOffset={8}
           role="status"
           aria-live="polite"
-          className="pointer-events-none rounded-md border border-neutral-600/70 bg-neutral-900/90 px-2 py-1 text-xs text-neutral-100 shadow-[0_10px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm transition-all duration-150 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-1"
+          className="pointer-events-none rounded-md border border-border-default bg-surface-subtle px-2 py-1 text-xs text-text-primary shadow-[0_10px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm transition-all duration-150 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-1"
         >
           {message}
-          <Popover.Arrow className="fill-neutral-800" />
+          <Popover.Arrow className="fill-surface-subtle" />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

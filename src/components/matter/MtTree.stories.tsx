@@ -132,17 +132,17 @@ export const DataApi: Story = {
           defaultExpandedIds={['src', 'src-components']}
           renderItem={(item, state) => (
             <>
-              <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-500">
+              <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">
                 {state.hasChildren ? (
-                  <span className={`h-2 w-2 rounded-full ${state.isExpanded ? 'bg-neutral-300' : 'bg-neutral-600'}`} />
+                  <span className={`h-2 w-2 rounded-full ${state.isExpanded ? 'bg-text-default' : 'bg-text-muted'}`} />
                 ) : null}
               </span>
               {item.icon && (
-                <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-400">{item.icon}</span>
+                <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">{item.icon}</span>
               )}
               <span className="truncate text-sm">{item.label}</span>
               {item.data?.kind === 'file' && typeof item.data.size === 'number' && (
-                <span className="ml-auto text-xs text-neutral-500">{item.data.size}b</span>
+                <span className="ml-auto text-xs text-text-muted">{item.data.size}b</span>
               )}
             </>
           )}

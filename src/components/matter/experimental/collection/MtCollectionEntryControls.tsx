@@ -96,7 +96,7 @@ export function MtCollectionSummaryInput({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-neutral-200 outline-none focus:border-[#2A2A2A]"
+      className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-[#2A2A2A]"
     />
   );
 }

@@ -164,8 +164,8 @@ export function MtFilterDropdown({
     const fieldIcon = fieldByValue.get(rule.field)?.icon;
 
     return (
-      <div className="flex items-center gap-2 rounded-md border border-neutral-800/70 bg-neutral-950/40 px-2 py-1.5">
-        <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-400">
+      <div className="flex items-center gap-2 rounded-md border border-border-default bg-surface-subtle px-2 py-1.5">
+        <span className="inline-flex h-4 w-4 items-center justify-center">
           {fieldIcon || <ListFilter className="h-4 w-4" />}
         </span>
         <MtSelect
@@ -232,7 +232,7 @@ export function MtFilterDropdown({
             variant="ghost"
           />
         ) : (
-          <span className="text-xs text-neutral-500">No value</span>
+          <span className="text-xs">No value</span>
         )}
       </div>
     );
@@ -243,7 +243,7 @@ export function MtFilterDropdown({
     const requiresValue = operator?.requiresValue ?? true;
 
     return (
-      <div className="flex items-center gap-2 rounded-md border border-neutral-800/70 bg-neutral-950/40 px-2 py-1.5">
+      <div className="flex items-center gap-2 rounded-md border border-border-default bg-surface-subtle px-2 py-1.5">
         <MtSelect
           value={rule.field}
           onValueChange={(nextValue) => {
@@ -305,12 +305,12 @@ export function MtFilterDropdown({
             variant="ghost"
           />
         ) : (
-          <span className="text-xs text-neutral-500">No value</span>
+          <span className="text-xs text-text-muted">No value</span>
         )}
 
         <button
           type="button"
-          className="text-neutral-400 hover:text-neutral-200"
+          className="text-text-muted hover:text-text-default"
           onClick={() => updateRoot(removeNodeAtPath(value, path))}
           aria-label="Delete rule"
         >
@@ -322,12 +322,12 @@ export function MtFilterDropdown({
 
   const renderGroup = (group: MtFilterGroup, path: number[], isRoot = false) => {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-neutral-800/70 bg-neutral-900/40 p-2">
-        <div className="flex items-center gap-2 text-xs text-neutral-400">
+      <div className="flex flex-col gap-2 rounded-lg border border-border-default bg-surface-subtle p-2">
+        <div className="flex items-center gap-2 text-xs text-text-muted">
           <span className="uppercase tracking-wide">{isRoot ? 'Where' : 'Group'}</span>
           <button
             type="button"
-            className="rounded-md border border-neutral-800/70 bg-neutral-950/40 px-2 py-1 text-xs text-neutral-200"
+            className="rounded-md border border-border-default bg-surface-subtle px-2 py-1 text-xs text-text-primary"
             onClick={() => {
               updateRoot(
                 updateNodeAtPath(value, path, (node) => ({
@@ -342,7 +342,7 @@ export function MtFilterDropdown({
           {!isRoot && (
             <button
               type="button"
-              className="ml-auto text-neutral-400 hover:text-neutral-200"
+              className="ml-auto text-text-muted hover:text-text-default"
               onClick={() => updateRoot(removeNodeAtPath(value, path))}
               aria-label="Delete group"
             >
@@ -365,7 +365,7 @@ export function MtFilterDropdown({
           <MtButton
             kind="icon"
             variant="ghost"
-            className="text-neutral-400"
+            className="text-text-muted"
             onClick={() => {
               updateRoot(
                 updateNodeAtPath(value, path, (node) => ({
@@ -377,12 +377,12 @@ export function MtFilterDropdown({
           >
             <Plus className="h-4 w-4" />
           </MtButton>
-          <span className="text-neutral-500">Add rule</span>
+          <span className="text-text-primary">Add rule</span>
 
           <MtButton
             kind="icon"
             variant="ghost"
-            className="text-neutral-400"
+            className="text-text-muted"
             onClick={() => {
               updateRoot(
                 updateNodeAtPath(value, path, (node) => ({
@@ -394,7 +394,7 @@ export function MtFilterDropdown({
           >
             <Plus className="h-4 w-4" />
           </MtButton>
-          <span className="text-neutral-500">Add group</span>
+          <span className="text-text-primary">Add group</span>
         </div>
       </div>
     );
@@ -411,10 +411,10 @@ export function MtFilterDropdown({
     <MtDropdown
       title={
         kind === 'icon' ? (
-          <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-300">{triggerIcon}</span>
+          <span className="inline-flex h-4 w-4 items-center justify-center text-text-primary">{triggerIcon}</span>
         ) : (
           <span className="inline-flex items-center gap-2">
-            <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-400">{triggerIcon}</span>
+            <span className="inline-flex h-4 w-4 items-center justify-center text-text-primary">{triggerIcon}</span>
             <span>{title}</span>
           </span>
         )
@@ -424,15 +424,15 @@ export function MtFilterDropdown({
       variant={variant}
       showCaret={showCaret}
     >
-      <div className="w-130 max-w-[80vw] p-2 text-neutral-200">
+      <div className="w-130 max-w-[80vw] p-2 text-text-primary">
         <div className="mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-neutral-500">
+          <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-text-muted">
             {isAdvanced && <ListFilter className="h-3.5 w-3.5" />}
             {isAdvanced ? 'Advanced' : 'Simple'} filter
           </span>
           <button
             type="button"
-            className="text-neutral-400 hover:text-neutral-200"
+            className="text-text-muted hover:text-text-default"
             onClick={() => setAdvanced(!isAdvanced)}
             aria-label="Toggle filter type"
           >

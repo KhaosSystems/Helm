@@ -102,22 +102,6 @@ function CustomListEntry({ entry }: { entry: MyEntry }) {
   );
 }
 
-/** Custom board card. */
-/*function CustomBoardEntry({ entry }: { entry: any }) {
-  const e = entry as MyEntry;
-  return (
-    <div className="rounded border border-[#2A2A2A] bg-[#1A1A1A] p-3 mb-2">
-      <div className="flex items-center justify-between">
-        <span className="text-white text-sm">{e.name}</span>
-        <span className={`text-xs ${PRIORITY_COLOR[e.priority] ?? ''}`}>{e.priority}</span>
-      </div>
-      <div className="text-neutral-500 text-xs mt-1">
-        {STATUS_ICON[e.status]} {e.status}
-      </div>
-    </div>
-  );
-}*/
-
 /**
  * Views with per-view custom entry renderers.
  * The list view renders a detailed row; the board view renders a card.

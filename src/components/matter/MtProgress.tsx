@@ -11,7 +11,7 @@ export function MtProgress({ value, max = 100, className, barClassName }: MtProg
 
   return (
     <div
-      className={`h-2 w-full overflow-hidden rounded-full bg-neutral-700/50 ${className || ''}`}
+      className={`h-2 w-full overflow-hidden rounded-full bg-surface-subtle ${className || ''}`}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={max}

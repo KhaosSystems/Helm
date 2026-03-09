@@ -9,13 +9,17 @@ interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   kind?: 'default' | 'icon';
   size?: 'medium' | 'large';
   variant?: MtButtonSurface;
+  selected?: boolean;
 }
 
 /**
  * TODO copy how Grafana does variants and size lineups: https://developers.grafana.com/ui/latest/index.html?path=/story/inputs-button--examples
  */
 const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
-  ({ children, type = 'button', size = 'medium', variant = 'default', kind = 'default', className, ...props }, ref) => {
+  (
+    { children, type = 'button', size = 'medium', variant = 'default', kind = 'default', selected = false, className, ...props },
+    ref,
+  ) => {
     const defaultLayoutClasses = {
       medium: 'mt-layout-input-medium w-fit',
       large: 'mt-layout-input-large w-fit',
@@ -41,6 +45,7 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
       <button
         ref={ref}
         type={type}
+        data-selected={selected ? 'true' : undefined}
         className={`${baseClasses} ${layoutClasses} ${surfaceClasses[variant]} ${className || ''}`}
         {...props}
       >

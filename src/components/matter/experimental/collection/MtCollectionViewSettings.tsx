@@ -89,15 +89,15 @@ export function MtDrawerMenu({ children, initialPageId = 'root', onClose }: MtDr
         <MtStack
           row
           justify="between"
-          className={`p-2 pr-3 gap-2 border-b text-neutral-300 border-[#2A2A2A] ${showBack ? '' : 'pl-3'}`}
+          className={`p-2 pr-3 gap-2 border-b text-text-primary border-[#2A2A2A] ${showBack ? '' : 'pl-3'}`}
         >
-          <MtStack row className="text-neutral-300" gap={2}>
+          <MtStack row className="text-text-primary" gap={2}>
             {showBack ? (
               <MtButton kind="icon" variant="ghost" onClick={goBack}>
                 <ArrowLeft size={16} stroke="#8D8D8D" />
               </MtButton>
             ) : null}
-            <span className="text-sm text-neutral-400">{currentTitle}</span>
+            <span className="text-sm text-text-primary">{currentTitle}</span>
           </MtStack>
           <MtButton kind="icon" variant="ghost" onClick={onClose}>
             <X size={16} stroke="#8D8D8D" />
@@ -112,7 +112,7 @@ export function MtDrawerMenu({ children, initialPageId = 'root', onClose }: MtDr
 
 export function MtDrawerMenuSection({ title, children }: { title?: string; children?: React.ReactNode }) {
   return (
-    <MtStack gap={1} className="py-2 border-b border-[#2A2A2A]">
+    <MtStack gap={1} className="py-2 border-b border-border-default">
       {title && <small className="px-2">{title}</small>}
       {children}
     </MtStack>
@@ -141,7 +141,7 @@ export function MtDrawerMenuItem({
   return (
     <MtButton
       variant="ghost"
-      className={`flex row items-center justify-between w-full ${active ? 'bg-neutral-700/50! text-neutral-100!' : ''}`}
+      className={`flex row items-center justify-between w-full`}
       onClick={() => {
         onClick?.();
         if (submenu) {
@@ -149,12 +149,13 @@ export function MtDrawerMenuItem({
         }
       }}
       disabled={disabled}
+      selected={active}
     >
       <div className="flex flex-row items-center gap-3">
         {icon}
         {label}
       </div>
-      {trailing ? <div className="flex flex-row items-center gap-3 text-neutral-500">{trailing}</div> : null}
+      {trailing ? <div className="flex flex-row items-center gap-3 text-text-muted">{trailing}</div> : null}
     </MtButton>
   );
 }

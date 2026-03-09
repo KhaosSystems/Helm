@@ -119,12 +119,12 @@ function DefaultBoardEntry({
             {showId ? (
               <>
                 {!showIssueType ? <EntryTypeIcon size={14} stroke="#608a23" /> : null}
-                <div className="text-xs text-neutral-500">{displayId}</div>
+                <div className="text-xs text-text-primary">{displayId}</div>
               </>
             ) : null}
             {showStatus ? <MtStateSelect value={status} onChange={onStatusChange} /> : null}
           </div>
-          <div className="flex items-center gap-2 text-xs text-neutral-400">
+          <div className="flex items-center gap-2 text-xs text-text-primary">
             {showPriority ? <MtPrioirtySelect value={priority} onChange={onPriorityChange} /> : null}
             {showAssignee ? <MtAvatar name={String(assignee ?? '')} size="xs" /> : null}
           </div>
@@ -264,11 +264,11 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
               setDragOverColumnKey(null);
               setDraggingId(null);
             }}
-            className={`w-72 min-w-72 rounded border bg-[#111111] ${dragOverColumnKey === column.key ? 'border-neutral-500' : 'border-[#2A2A2A]'}`}
+            className={`w-72 min-w-72 rounded border bg-[#111111] ${dragOverColumnKey === column.key ? 'border-border-default' : 'border-[#2A2A2A]'}`}
           >
-            <div className="flex items-center justify-between border-b border-[#2A2A2A] px-3 py-2 text-sm">
-              <span className="text-neutral-300">{column.label}</span>
-              <span className="text-neutral-500">{column.entries.length}</span>
+            <div className="flex items-center justify-between border-b border-border-default px-3 py-2 text-sm">
+              <span className="text-text-primary">{column.label}</span>
+              <span className="text-text-muted">{column.entries.length}</span>
             </div>
 
             <div className="flex flex-col gap-2 p-2">

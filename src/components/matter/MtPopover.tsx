@@ -61,7 +61,7 @@ const MtPopoverBase = ({
           side={side}
           align={align}
           sideOffset={sideOffset}
-          className={`bg-neutral-950/90 border border-neutral-700/50 rounded-lg p-2 shadow-2xl backdrop-blur-md z-50 ${className || ''}`}
+          className={`bg-surface-subtle border border-border-default rounded-lg p-2 shadow-2xl backdrop-blur-md z-50 ${className || ''}`}
         >
           {content}
         </Popover.Content>

@@ -64,12 +64,12 @@ export function MtSortDropdown({
     <MtDropdown
       title={
         kind === 'icon' ? (
-          <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-300">
+          <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">
             {renderTriggerIcon()}
           </span>
         ) : (
           <span className="inline-flex items-center gap-2">
-            <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-400">
+            <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">
               {renderTriggerIcon()}
             </span>
             <span>{title}</span>
@@ -81,13 +81,13 @@ export function MtSortDropdown({
       variant={variant}
       showCaret={showCaret}
     >
-      <div className="w-105 max-w-[80vw] p-2 text-neutral-200">
+      <div className="w-105 max-w-[80vw] p-2 text-text-muted">
         <div className="flex flex-col gap-2">
-          {value.length === 0 && <div className="text-xs text-neutral-500">No sorting rules.</div>}
+          {value.length === 0 && <div className="text-xs text-text-muted">No sorting rules.</div>}
           {value.map((rule, index) => (
             <div
               key={`${rule.property}-${index}`}
-              className="flex items-center gap-2 rounded-md border border-neutral-800/70 bg-neutral-950/40 px-2 py-1.5"
+              className="flex items-center gap-2 rounded-md border border-border-default bg-surface-subtle px-2 py-1.5"
             >
               <MtSelect
                 value={rule.property}
@@ -122,7 +122,7 @@ export function MtSortDropdown({
 
               <button
                 type="button"
-                className="ml-auto text-neutral-400 hover:text-neutral-200"
+                className="ml-auto text-text-muted hover:text-text-default"
                 onClick={() => removeRule(index)}
                 aria-label="Delete sort rule"
               >
@@ -133,10 +133,10 @@ export function MtSortDropdown({
         </div>
 
         <div className="mt-3 flex items-center gap-2 text-xs">
-          <MtButton kind="icon" variant="ghost" className="text-neutral-400" onClick={addRule}>
+          <MtButton kind="icon" variant="ghost" className="text-text-muted" onClick={addRule}>
             <Plus className="h-4 w-4" />
           </MtButton>
-          <span className="text-neutral-500">Add sort</span>
+          <span className="text-text-muted">Add sort</span>
         </div>
       </div>
     </MtDropdown>

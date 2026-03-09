@@ -41,9 +41,9 @@ function buildListPropertyOptions(properties: Array<{ id: string; label: string;
 
 function MtCollectionListGroup({ label, count }: { label: string; count: number }) {
   return (
-    <div className="flex items-center justify-between px-6 border-b border-[#2A2A2A] h-11 bg-[#111111] text-sm">
-      <span className="text-neutral-300">{label}</span>
-      <span className="text-neutral-500">{count}</span>
+    <div className="flex items-center justify-between px-6 border-b border-border-default h-11 bg-[#111111] text-sm">
+      <span className="text-text-primary">{label}</span>
+      <span className="text-text-muted">{count}</span>
     </div>
   );
 }
@@ -610,7 +610,7 @@ function MtCollectionListLayoutToolbarActions() {
               >
                 <span className="flex items-center justify-between w-full">
                   <span>{property.label}</span>
-                  <span className="text-neutral-500 text-xs">{isVisible ? 'Visible' : 'Hidden'}</span>
+                  <span className="text-text-muted text-xs">{isVisible ? 'Visible' : 'Hidden'}</span>
                 </span>
               </MtDropdownItem>
             );

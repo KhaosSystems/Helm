@@ -99,7 +99,7 @@ export function MtCollectionTaskListEntry({
       ) : null}
 
       {showId ? (
-        <div className="flex items-center gap-1 text-neutral-500 min-w-0">
+        <div className="flex items-center gap-1 text-text-primary min-w-0">
           {!showIssueType ? <EntryTypeIcon size={14} stroke="#608a23" /> : null}
           <span className="truncate">{displayId}</span>
         </div>
@@ -115,7 +115,7 @@ export function MtCollectionTaskListEntry({
         />
       ) : null}
 
-      {showName ? <span className="text-neutral-300 truncate max-w-40">{name || '—'}</span> : null}
+      {showName ? <span className="text-text-primary truncate max-w-40">{name || '—'}</span> : null}
 
       <div className="flex-1 min-w-0">
         <MtCollectionSummaryInput

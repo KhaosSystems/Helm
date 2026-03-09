@@ -35,15 +35,15 @@ interface WithContextMenuProps {
 function renderItems(items: MtContextMenuItem[]) {
   return items.map((item, index) => {
     if (item.separator) {
-      return <RadixContextMenu.Separator key={`separator-${index}`} className="my-1 h-px bg-neutral-700/60" />;
-    }
+      return <RadixContextMenu.Separator key={`separator-${index}`} className="my-1 h-px bg-border-default" />;
+    }0
 
     if (item.items?.length) {
       return (
         <RadixContextMenu.Sub key={`sub-${index}`}>
           <RadixContextMenu.SubTrigger
             disabled={item.disabled}
-            className="flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm text-neutral-100 outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 data-highlighted:bg-neutral-700/60"
+            className="flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm text-text-default outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 data-highlighted:bg-surface-hover"
           >
             <span>{item.label}</span>
             <ChevronRight className="h-3.5 w-3.5 opacity-70" />
@@ -52,7 +52,7 @@ function renderItems(items: MtContextMenuItem[]) {
             <RadixContextMenu.SubContent
               sideOffset={6}
               alignOffset={-4}
-              className="z-50 min-w-44 rounded-lg border border-neutral-700/60 bg-neutral-900/95 p-1.5 shadow-2xl"
+              className="z-50 min-w-44 rounded-lg border border-border-default bg-surface-base p-1.5 shadow-2xl"
             >
               {renderItems(item.items)}
             </RadixContextMenu.SubContent>
@@ -66,10 +66,10 @@ function renderItems(items: MtContextMenuItem[]) {
         key={`item-${index}`}
         disabled={item.disabled}
         onSelect={item.onSelect}
-        className="flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm text-neutral-100 outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 data-highlighted:bg-neutral-700/60"
+        className="flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm text-text-default outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 data-highlighted:bg-surface-hover"
       >
         <span>{item.label}</span>
-        {item.shortcut ? <span className="ml-6 text-xs text-neutral-500">{item.shortcut}</span> : null}
+        {item.shortcut ? <span className="ml-6 text-xs text-text-muted">{item.shortcut}</span> : null}
       </RadixContextMenu.Item>
     );
   });
@@ -135,10 +135,10 @@ export function MtContextMenu({
       <RadixContextMenu.Portal>
         <RadixContextMenu.Content
           onCloseAutoFocus={(event) => event.preventDefault()}
-          className={`z-50 min-w-48 rounded-lg border border-neutral-700/60 bg-neutral-900/95 p-1.5 shadow-2xl ${className ?? ''}`}
+          className={`z-50 min-w-48 rounded-lg border border-border-default bg-surface-base p-1.5 shadow-2xl ${className ?? ''}`}
         >
-          {renderHeader ? <div className="px-2.5 py-1.5 text-xs text-neutral-400">{renderHeader()}</div> : null}
-          {renderHeader ? <RadixContextMenu.Separator className="my-1 h-px bg-neutral-700/60" /> : null}
+          {renderHeader ? <div className="px-2.5 py-1.5 text-xs text-text-muted">{renderHeader()}</div> : null}
+          {renderHeader ? <RadixContextMenu.Separator className="my-1 h-px bg-border-default" /> : null}
           {content}
         </RadixContextMenu.Content>
       </RadixContextMenu.Portal>

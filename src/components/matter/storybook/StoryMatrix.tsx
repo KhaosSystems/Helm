@@ -35,7 +35,7 @@ export function StoryMatrix<
       {sections.options.map((section) => (
         <section key={section.value} className="flex flex-col gap-3">
           {showSectionLabel && (
-            <h3 className="text-xs font-medium uppercase tracking-widest text-neutral-400">{txt(section)}</h3>
+            <h3 className="text-xs font-medium uppercase tracking-widest text-text-primary">{txt(section)}</h3>
           )}
 
           <div className="overflow-auto">
@@ -54,9 +54,9 @@ export function StoryMatrix<
                     className="flex flex-col items-center justify-end gap-0.5 pb-2"
                   >
                     {showGroupLabel && group && (
-                      <span className="text-[9px] uppercase tracking-widest text-neutral-600">{txt(group)}</span>
+                      <span className="text-[9px] uppercase tracking-widest text-text-primary">{txt(group)}</span>
                     )}
-                    <span className="text-[10px] font-medium uppercase tracking-widest text-neutral-500">
+                    <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted">
                       {txt(col)}
                     </span>
                   </div>
@@ -66,7 +66,7 @@ export function StoryMatrix<
               {/* Rows */}
               {rows.options.map((row) => (
                 <div key={row.value} className="contents">
-                  <div className="flex min-h-14 items-center justify-center px-4 text-[10px] font-medium uppercase tracking-widest text-neutral-500">
+                  <div className="flex min-h-14 items-center justify-center px-4 text-[10px] font-medium uppercase tracking-widest text-text-muted">
                     {txt(row)}
                   </div>
 

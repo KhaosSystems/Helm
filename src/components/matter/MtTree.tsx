@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import { Children, isValidElement, ReactElement, ReactNode, useMemo, useState } from 'react';
+import { MtButton } from './MtButton';
 
 export interface MtTreeItem<TData = unknown> {
   id: string;
@@ -192,54 +193,51 @@ const MtTreeBase = <TData = unknown,>({
 
           return (
             <li key={node.id} role="none" className="flex flex-col">
-              <div className="flex items-stretch">
-                <button
-                  type="button"
-                  role="treeitem"
-                  aria-expanded={hasChildren ? isExpanded : undefined}
-                  aria-selected={isSelected}
-                  aria-disabled={node.disabled || undefined}
-                  disabled={node.disabled}
-                  onClick={() => {
-                    onItemClick?.(node);
-                    setSelected(node.id);
-                    if (hasChildren && toggleOnItemClick) {
-                      toggleExpanded(node.id);
-                    }
-                  }}
-                  className={`flex w-full items-center gap-1 rounded-md border border-transparent py-1 pr-2 text-left transition-colors ${
-                    isSelected ? 'bg-neutral-700/50 text-neutral-100' : 'text-neutral-200 hover:bg-neutral-700/50'
-                  } ${node.disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                  style={{ paddingLeft: `${depth * indentPx + 6}px` }}
-                >
-                  {renderItem ? (
-                    renderItem(node, renderState)
-                  ) : (
-                    <>
-                      <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-500">
-                        {hasChildren ? (
-                          <ChevronRight
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleExpanded(node.id);
-                            }}
-                            className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                          />
-                        ) : null}
+              <MtButton
+                variant="ghost"
+                selected={isSelected}
+                role="treeitem"
+                aria-expanded={hasChildren ? isExpanded : undefined}
+                aria-selected={isSelected}
+                aria-disabled={node.disabled || undefined}
+                disabled={node.disabled}
+                onClick={() => {
+                  onItemClick?.(node);
+                  setSelected(node.id);
+                  if (hasChildren && toggleOnItemClick) {
+                    toggleExpanded(node.id);
+                  }
+                }}
+                className="h-auto min-h-0 w-full items-center justify-start gap-1 py-1 pr-2 text-left"
+                style={{ paddingLeft: `${depth * indentPx + 6}px` }}
+              >
+                {renderItem ? (
+                  renderItem(node, renderState)
+                ) : (
+                  <>
+                    <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">
+                      {hasChildren ? (
+                        <ChevronRight
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleExpanded(node.id);
+                          }}
+                          className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                        />
+                      ) : null}
+                    </span>
+
+                    {node.icon && (
+                      <span className="inline-flex h-4 w-4 items-center justify-center text-text-primary">
+                        {node.icon}
                       </span>
+                    )}
 
-                      {node.icon && (
-                        <span className="inline-flex h-4 w-4 items-center justify-center text-neutral-400">
-                          {node.icon}
-                        </span>
-                      )}
-
-                      <span className="truncate text-sm">{node.label}</span>
-                      {node.trailing && <span className="ml-auto text-xs text-neutral-500">{node.trailing}</span>}
-                    </>
-                  )}
-                </button>
-              </div>
+                    <span className="truncate text-sm">{node.label}</span>
+                    {node.trailing && <span className="ml-auto text-xs text-text-primary">{node.trailing}</span>}
+                  </>
+                )}
+              </MtButton>
 
               {hasChildren && isExpanded && node.children ? renderNodes(node.children, depth + 1) : null}
             </li>

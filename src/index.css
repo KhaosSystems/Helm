@@ -42,7 +42,7 @@
 /** mt-text-caption: A utility for small, supporting text such as captions, labels, and metadata. */
 @utility mt-text-caption {
   @apply text-sm;
-  color: var(--color-text-subtle);
+  @apply text-text-muted;
 }
 
 /**
@@ -77,6 +77,7 @@
 @utility mt-surface-input-default {
   @apply text-base border select-none;
   @apply bg-input-base-background-default border-border-default text-input-content-default;
+  @apply data-[selected]:bg-surface-popover;
   @apply hover:bg-input-base-background-hover/75;
   @apply mt-ring-input-default;
   @apply active:bg-input-base-background-active/50;
@@ -86,6 +87,7 @@
 @utility mt-surface-input-accent {
   @apply text-base border-none select-none;
   @apply bg-input-accent-background-default text-white;
+  @apply data-[selected]:bg-surface-popover;
   @apply hover:bg-input-accent-background-hover;
   @apply mt-ring-input-accent;
   @apply active:bg-input-accent-background-active;
@@ -95,6 +97,7 @@
 @utility mt-surface-input-ghost {
   @apply text-base border-none select-none;
   @apply bg-transparent text-input-content-default;
+  @apply data-[selected]:bg-surface-popover;
   @apply hover:bg-surface-popover;
   @apply mt-ring-input-default;
   @apply active:bg-surface-popover;

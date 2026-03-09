@@ -209,9 +209,10 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
               ]}
             >
               {({ openMenu }) => (
-                <button
-                  type="button"
-                  className={`flex items-center gap-2 rounded px-2 py-1 text-sm border ${view.id === currentView?.id ? 'border-[#8D8D8D] text-neutral-100' : 'border-transparent text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'}`}
+                <MtButton
+                  variant="ghost"
+                  selected={view.id === currentView?.id}
+                  className="h-auto min-h-0 items-center gap-2 border border-transparent px-2 py-1 text-sm text-text-muted hover:text-text-primary data-[selected]:border-[#8D8D8D] data-[selected]:text-text-primary"
                   onClick={(event) => {
                     if (view.id === currentView?.id) {
                       openMenu(event);
@@ -227,7 +228,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
                 >
                   <MtCollectionViewIcon iconId={view.icon} layoutName={view.layout?.name} />
                   <span>{view.name}</span>
-                </button>
+                </MtButton>
               )}
             </WithContextMenu>
           ))}
@@ -237,21 +238,22 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
           onOpenChange={setIsAddViewOpen}
           content={
             <div className="w-80 flex flex-col gap-2">
-              <div className="text-sm text-neutral-300">Add view</div>
+              <div className="text-sm text-text-primary">Add view</div>
 
               <div className="flex flex-col gap-2">
                 {availableLayouts.map((layout) => (
-                  <button
+                  <MtButton
                     key={layout.id}
-                    type="button"
+                    variant="ghost"
+                    selected={templateLayoutName === layout.id}
                     onClick={() => {
                       setTemplateLayoutName(layout.id);
                       createViewFromTemplate(layout.id);
                     }}
-                    className={`w-full rounded border px-2 py-2 text-left transition-colors ${templateLayoutName === layout.id ? 'border-[#8D8D8D] bg-neutral-800/50' : 'border-[#2A2A2A] bg-transparent hover:bg-neutral-800/30'}`}
+                    className="h-auto min-h-0 w-full justify-start rounded border border-[#2A2A2A] px-2 py-2 text-left transition-colors data-[selected]:border-[#8D8D8D] data-[selected]:bg-surface-popover hover:bg-surface-popover"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded border border-[#2A2A2A] bg-[#1A1A1A] flex items-center justify-center text-xs text-neutral-300">
+                      <div className="w-9 h-9 rounded border border-[#2A2A2A] bg-[#1A1A1A] flex items-center justify-center text-xs text-text-primary">
                         {layout.templateView.icon ? (
                           <MtCollectionViewIcon
                             iconId={layout.templateView.icon}
@@ -262,11 +264,11 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm text-neutral-200 truncate">{layout.name}</div>
-                        <div className="text-xs text-neutral-500 truncate">Create from layout</div>
+                        <div className="text-sm text-text-primary truncate">{layout.name}</div>
+                        <div className="text-xs text-text-muted truncate">Create from layout</div>
                       </div>
                     </div>
-                  </button>
+                  </MtButton>
                 ))}
               </div>
             </div>

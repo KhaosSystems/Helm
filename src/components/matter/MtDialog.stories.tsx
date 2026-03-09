@@ -43,7 +43,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: <div className="text-sm text-neutral-300">Dialog content goes here</div>,
+    children: <div className="text-sm">Dialog content goes here</div>,
   },
 };
 
