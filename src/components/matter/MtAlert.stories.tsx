@@ -30,6 +30,15 @@ export const Success: Story = {
   },
 };
 
+export const NonClosable: Story = {
+  args: {
+    severity: 'info',
+    title: 'Pinned notice',
+    content: 'This alert cannot be dismissed.',
+    showCloseButton: false,
+  },
+};
+
 export const Warning: Story = {
   args: {
     severity: 'warning',

@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { CheckCircle2, CircleAlert, CircleX, Info } from 'lucide-react';
+import { CheckCircle2, CircleAlert, CircleX, Info, X } from 'lucide-react';
+import { MtButton } from './MtButton';
 
 export type MtAlertSeverity = 'success' | 'info' | 'warning' | 'error';
 
@@ -8,6 +10,7 @@ interface MtAlertProps {
   content: ReactNode;
   severity?: MtAlertSeverity;
   actions?: ReactNode;
+  showCloseButton?: boolean;
   className?: string;
 }
 
@@ -41,8 +44,20 @@ const severityConfig: Record<
   },
 };
 
-export function MtAlert({ title, content, severity = 'info', actions, className }: MtAlertProps) {
+export function MtAlert({
+  title,
+  content,
+  severity = 'info',
+  actions,
+  showCloseButton = true,
+  className,
+}: MtAlertProps) {
+  const [isVisible, setIsVisible] = useState(true);
   const { icon: Icon, iconClassName, borderClassName } = severityConfig[severity];
+
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <div
@@ -58,6 +73,19 @@ export function MtAlert({ title, content, severity = 'info', actions, className 
 
           {actions && <div className="mt-3">{actions}</div>}
         </div>
+
+        {showCloseButton && (
+          <MtButton
+            kind="icon"
+            size="medium"
+            variant="ghost"
+            aria-label="Close alert"
+            onClick={() => setIsVisible(false)}
+            className="shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </MtButton>
+        )}
       </div>
     </div>
   );
