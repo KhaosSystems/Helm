@@ -44,7 +44,7 @@ export const MtSelectItem = React.forwardRef<
 >(({ children, className, icon, shortcut = '', ...props }, forwardedRef) => {
   return (
     <Select.Item
-      className={`flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm text-neutral-100 outline-none transition-colors data-[state=checked]:bg-neutral-700/60 data-disabled:cursor-not-allowed data-disabled:opacity-40 data-highlighted:bg-neutral-700/60 ${className}`}
+      className={`mt-surface-input-ghost focus:ring-0 focus:ring-offset-0 data-highlighted:bg-surface-popover data-[state=checked]:bg-surface-popover flex min-w-44 cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm outline-none transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-40 ${className || ''}`}
       {...props}
       ref={forwardedRef}
     >
@@ -52,10 +52,10 @@ export const MtSelectItem = React.forwardRef<
         {icon ? <span className="mr-2">{icon}</span> : null}
         <Select.ItemText>{children}</Select.ItemText>
       </span>
-      <span className="ml-6 flex items-center gap-2 text-xs text-neutral-500">
+      <span className="ml-6 flex items-center gap-2 text-xs text-text-muted">
         {shortcut ? <span>{shortcut}</span> : null}
         <Select.ItemIndicator>
-          <Check className="h-4 w-4 text-neutral-500" />
+          <Check className="h-4 w-4 text-text-muted" />
         </Select.ItemIndicator>
       </span>
     </Select.Item>
@@ -207,11 +207,11 @@ const MtSelectBase = ({
           sideOffset={5}
           position="popper"
           align="center"
-          className="z-50 min-w-48 rounded-lg border border-neutral-700/60 bg-neutral-900/95 p-1.5 shadow-2xl"
+          className="mt-surface-menu z-50 min-w-48 rounded-lg border p-1.5 shadow-2xl"
         >
           <Select.ScrollUpButton />
           <Select.Viewport>
-            <Select.Group>
+            <Select.Group className="flex flex-col gap-0.5">
               {selectItems.map((child, index) =>
                 React.cloneElement(child as React.ReactElement<any>, {
                   shortcut: (index + 1).toString(),
