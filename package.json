@@ -1,6 +1,6 @@
 {
   "name": "@khaos-systems/helm",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "description": "This package contains the Helm design system.",
   "homepage": "https://github.com/khaossystems/helm#readme",
