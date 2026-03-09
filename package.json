@@ -1,6 +1,6 @@
 {
   "name": "@khaos-systems/helm",
-  "version": "0.2.0",
+  "version": "0.1.14",
   "private": false,
   "description": "This package contains the Helm design system.",
   "homepage": "https://github.com/khaossystems/helm#readme",
@@ -19,6 +19,11 @@
       "types": "./dist/lib.d.ts",
       "import": "./dist/matter.js",
       "require": "./dist/matter.cjs"
+    },
+    "./experimental": {
+      "types": "./dist/experimental.d.ts",
+      "import": "./dist/experimental.js",
+      "require": "./dist/experimental.cjs"
     },
     "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
