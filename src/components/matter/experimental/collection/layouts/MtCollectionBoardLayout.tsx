@@ -313,8 +313,8 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                         entry?.parentId
                           ? String(
                               entryByConvexId.get(String(entry.parentId))?.id ??
-                              entryByConvexId.get(String(entry.parentId))?._id ??
-                              entry.parentId,
+                                entryByConvexId.get(String(entry.parentId))?._id ??
+                                entry.parentId,
                             )
                           : undefined
                       }

@@ -135,9 +135,7 @@ function buildRows(
     }
   }
 
-  const topLevelEntries = entries.filter(
-    (entry) => !entry.parentId || !entryConvexIdSet.has(String(entry.parentId)),
-  );
+  const topLevelEntries = entries.filter((entry) => !entry.parentId || !entryConvexIdSet.has(String(entry.parentId)));
 
   function appendEntry(rows: FlatRow[], entry: any, depth: number) {
     const convexId = String(entry._id ?? entry.id ?? '');
