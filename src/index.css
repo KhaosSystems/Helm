@@ -120,9 +120,9 @@
 }
 
 @utility mt-surface-panel {
-	@apply bg-surface-panel;
-	@apply rounded;
-	@apply text-text-primary;
+  @apply bg-surface-panel;
+  @apply rounded;
+  @apply text-text-primary;
 }
 
 @utility mt-surface-elevated {

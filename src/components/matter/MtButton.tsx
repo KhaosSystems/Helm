@@ -17,7 +17,16 @@ interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  */
 const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
   (
-    { children, type = 'button', size = 'medium', variant = 'default', kind = 'default', selected = false, className, ...props },
+    {
+      children,
+      type = 'button',
+      size = 'medium',
+      variant = 'default',
+      kind = 'default',
+      selected = false,
+      className,
+      ...props
+    },
     ref,
   ) => {
     const defaultLayoutClasses = {
@@ -38,8 +47,7 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
       ghost: 'mt-surface-input-ghost',
     };
 
-    const baseClasses =
-      'flex items-center gap-2 rounded transition-all duration-150';
+    const baseClasses = 'flex items-center gap-2 rounded transition-all duration-150';
 
     const layoutClasses = kind === 'icon' ? iconKindClasses[size] : defaultLayoutClasses[size];
 

@@ -36,7 +36,8 @@ function renderItems(items: MtContextMenuItem[]) {
   return items.map((item, index) => {
     if (item.separator) {
       return <RadixContextMenu.Separator key={`separator-${index}`} className="my-1 h-px bg-border-default" />;
-    }0
+    }
+    0;
 
     if (item.items?.length) {
       return (

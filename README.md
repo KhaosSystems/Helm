@@ -2,7 +2,7 @@
 
 https://www.npmjs.com/package/@khaos-systems/helm
 
-This package contains the Matter design system and Storybook site extracted from `anchor`. 
+This package contains the Matter design system and Storybook site extracted from `anchor`.
 
 ## Commands
 

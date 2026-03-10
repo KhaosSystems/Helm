@@ -64,9 +64,7 @@ export function MtSortDropdown({
     <MtDropdown
       title={
         kind === 'icon' ? (
-          <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">
-            {renderTriggerIcon()}
-          </span>
+          <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">{renderTriggerIcon()}</span>
         ) : (
           <span className="inline-flex items-center gap-2">
             <span className="inline-flex h-4 w-4 items-center justify-center text-text-muted">

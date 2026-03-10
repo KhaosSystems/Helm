@@ -84,7 +84,7 @@
   --color-border-default: #292929;
   --color-border-subtle: var(--color-missing);
 
-  --color-text-primary: #CACACA;
+  --color-text-primary: #cacaca;
   --color-text-secondary: var(--color-missing);
   --color-text-muted: #676767;
   --color-text-disabled: var(--color-missing);

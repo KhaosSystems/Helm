@@ -91,10 +91,7 @@ export const Uncontrolled: Story = {
           {({ openMenu }) => (
             <div className="flex items-center gap-3">
               <MtButton onClick={openMenu}>Open Menu</MtButton>
-              <div
-                className="rounded-md border px-3 py-2 text-xs"
-                onContextMenu={openMenu}
-              >
+              <div className="rounded-md border px-3 py-2 text-xs" onContextMenu={openMenu}>
                 Or right-click this chip
               </div>
             </div>

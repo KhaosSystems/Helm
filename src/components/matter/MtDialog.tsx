@@ -43,21 +43,13 @@ export function MtDialog({
                     </Dialog.Title>
                   )}
 
-                  {description && (
-                    <Dialog.Description className="mt-2 text-sm">{description}</Dialog.Description>
-                  )}
+                  {description && <Dialog.Description className="mt-2 text-sm">{description}</Dialog.Description>}
                 </div>
               )}
 
-                {showCloseButton && (
+              {showCloseButton && (
                 <Dialog.Close asChild>
-                  <MtButton
-                    kind="icon"
-                    size="large"
-                    variant="ghost"
-                    aria-label="Close"
-                    className="shrink-0"
-                  >
+                  <MtButton kind="icon" size="large" variant="ghost" aria-label="Close" className="shrink-0">
                     <X className="h-4 w-4" />
                   </MtButton>
                 </Dialog.Close>

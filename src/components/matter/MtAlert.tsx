@@ -60,10 +60,7 @@ export function MtAlert({
   }
 
   return (
-    <div
-      role="alert"
-      className={`mt-surface-elevated p-3 border-2 ${borderClassName} ${className || ''}`}
-    >
+    <div role="alert" className={`mt-surface-elevated p-3 border-2 ${borderClassName} ${className || ''}`}>
       <div className="flex items-start gap-3">
         <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${iconClassName}`} />
 
