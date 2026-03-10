@@ -25,7 +25,9 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
   } = useMtCollection /*<T>*/();
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [isAddViewOpen, setIsAddViewOpen] = React.useState(false);
-  const [templateLayoutName, setTemplateLayoutName] = React.useState<string>(viewTemplates[0]?.id ?? views[0]?.id ?? '');
+  const [templateLayoutName, setTemplateLayoutName] = React.useState<string>(
+    viewTemplates[0]?.id ?? views[0]?.id ?? '',
+  );
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const nextViewIdRef = React.useRef(views.length + 1);
   const availableLayouts = React.useMemo(() => {
