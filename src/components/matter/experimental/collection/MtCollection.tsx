@@ -139,6 +139,7 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   className?: string;
   assigneeOptions?: MtCollectionAssigneeOption[];
   onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
+  onAddEntry?: () => void | Promise<void>;
 }
 
 /**
@@ -155,6 +156,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   className,
   assigneeOptions,
   onUpdateEntry,
+  onAddEntry,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -308,6 +310,7 @@ export function MtCollection<T extends MtCollectionEntry>({
     <MtCollectionContext.Provider
       value={{
         entries,
+        onAddEntry,
         views: viewState,
         currentView,
         setCurrentView,

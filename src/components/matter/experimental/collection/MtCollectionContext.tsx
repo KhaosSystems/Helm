@@ -8,6 +8,7 @@ import type { MtCollectionEntry, MtCollectionProperty, MtCollectionView } from '
  */
 interface MtCollectionContextProps<T extends MtCollectionEntry> {
   entries: T[];
+  onAddEntry?: () => void | Promise<void>;
   views: MtCollectionView<T>[];
   currentView: MtCollectionView<T> | null;
   showViewSettings: boolean;

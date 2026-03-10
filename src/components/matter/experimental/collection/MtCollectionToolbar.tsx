@@ -14,6 +14,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     currentView,
     setCurrentView,
     entries,
+    onAddEntry,
     addView,
     deleteView,
     openViewSettings,
@@ -393,7 +394,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
           <Settings size={16} stroke="#8D8D8D" />
         </MtButton>
 
-        <MtButton onClick={() => undefined} variant="accent">
+        <MtButton onClick={() => void onAddEntry?.()} variant="accent">
           + Add
         </MtButton>
       </div>
