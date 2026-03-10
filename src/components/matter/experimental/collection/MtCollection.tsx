@@ -18,6 +18,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { MtCollectionToolbar } from './MtCollectionToolbar';
 import { MtCollectionContext } from './MtCollectionContext';
 import { MtCollectionViewSettings } from './MtCollectionViewSettings';
+import type { MtCollectionAssigneeOption } from './MtCollectionEntryControls';
 
 /**
  * Minimal interface for an item represented in the collection.
@@ -116,6 +117,10 @@ export interface MtCollectionLayoutProps<T extends MtCollectionEntry> {
   viewSettings?: MtCollectionViewSettingsState;
   /** Custom renderer for each entry. Layouts should fall back to their own default if omitted. */
   renderEntry?: MtCollectionEntryRenderer<T>;
+  /** Optional assignee options for entry-level assignee controls. */
+  assigneeOptions?: MtCollectionAssigneeOption[];
+  /** Optional callback invoked when a layout updates an entry field. */
+  onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
 }
 
 /**
@@ -132,6 +137,8 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   showViewSettings?: boolean;
   viewSettings?: ReactNode;
   className?: string;
+  assigneeOptions?: MtCollectionAssigneeOption[];
+  onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
 }
 
 /**
@@ -146,6 +153,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   showViewSettings = false,
   viewSettings = <MtCollectionViewSettings />,
   className,
+  assigneeOptions,
+  onUpdateEntry,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -337,6 +346,8 @@ export function MtCollection<T extends MtCollectionEntry>({
                 properties={propertyState}
                 viewSettings={currentViewSettings}
                 renderEntry={currentView.renderEntry ?? renderEntry}
+                assigneeOptions={assigneeOptions}
+                onUpdateEntry={onUpdateEntry}
               />
             ) : (
               <div>No view selected</div>

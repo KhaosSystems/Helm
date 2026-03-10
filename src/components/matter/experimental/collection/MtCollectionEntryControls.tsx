@@ -108,10 +108,17 @@ export function MtCollectionAssigneeDropdown({
 }: {
   assignee?: string;
   options: MtCollectionAssigneeOption[];
-  onChange: (value: string) => void;
+  onChange: (value?: string) => void;
 }) {
   return (
-    <MtSelect kind="icon" variant="ghost" value={assignee} onValueChange={onChange}>
+    <MtSelect
+      kind="icon"
+      variant="ghost"
+      value={assignee}
+      placeholder="?"
+      onValueChange={(nextValue) => onChange(nextValue === '__unassigned__' ? undefined : nextValue)}
+    >
+      <MtSelectItem value="__unassigned__">Unassigned</MtSelectItem>
       {options.map((option) => (
         <MtSelectItem key={option.value} value={option.value} icon={<MtAvatar name={option.label} size="xs" />}>
           {option.label}

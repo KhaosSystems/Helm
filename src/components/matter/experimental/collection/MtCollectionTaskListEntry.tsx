@@ -3,6 +3,8 @@ import React from 'react';
 import MtAvatar from '../../MtAvatar';
 import { MtCheckbox } from '../../MtCheckbox';
 import {
+  MtCollectionAssigneeDropdown,
+  MtCollectionAssigneeOption,
   MtCollectionSummaryInput,
   MtIssueTypeSelect,
   MtPrioirtySelect,
@@ -16,6 +18,8 @@ type MtCollectionTaskListEntryProps = {
   onPriorityChange?: (nextPriority: string) => void;
   onStatusChange?: (nextStatus: string) => void;
   onIssueTypeChange?: (nextType: string) => void;
+  assigneeOptions?: MtCollectionAssigneeOption[];
+  onAssigneeChange?: (nextAssignee?: string) => void;
 };
 
 export function MtCollectionTaskListEntry({
@@ -25,6 +29,8 @@ export function MtCollectionTaskListEntry({
   onPriorityChange,
   onStatusChange,
   onIssueTypeChange,
+  assigneeOptions,
+  onAssigneeChange,
 }: MtCollectionTaskListEntryProps) {
   const displayId = entry?.id ? String(entry.id) : '';
   const name = entry?.name ? String(entry.name) : entry?.title ? String(entry.title) : '';
@@ -39,13 +45,15 @@ export function MtCollectionTaskListEntry({
   const [priorityState, setPriorityState] = React.useState(priority);
   const [statusState, setStatusState] = React.useState(status);
   const [entryTypeState, setEntryTypeState] = React.useState(entryType);
+  const [assigneeState, setAssigneeState] = React.useState(assignee || undefined);
 
   React.useEffect(() => {
     setSummaryState(summary);
     setPriorityState(priority);
     setStatusState(status);
     setEntryTypeState(entryType);
-  }, [summary, priority, status, entryType]);
+    setAssigneeState(assignee || undefined);
+  }, [summary, priority, status, entryType, assignee]);
 
   const showId = visiblePropertySet.has('id');
   const showName = visiblePropertySet.has('name') || visiblePropertySet.has('title');
@@ -127,7 +135,20 @@ export function MtCollectionTaskListEntry({
         />
       </div>
 
-      {showAssignee ? <MtAvatar name={assignee} size="xs" /> : null}
+      {showAssignee ? (
+        assigneeOptions && assigneeOptions.length > 0 ? (
+          <MtCollectionAssigneeDropdown
+            assignee={assigneeState}
+            options={assigneeOptions}
+            onChange={(nextAssignee) => {
+              setAssigneeState(nextAssignee);
+              onAssigneeChange?.(nextAssignee);
+            }}
+          />
+        ) : (
+          <MtAvatar name={assignee} size="xs" />
+        )
+      ) : null}
     </div>
   );
 }

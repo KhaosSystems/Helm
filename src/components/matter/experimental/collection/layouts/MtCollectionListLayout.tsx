@@ -9,6 +9,7 @@ import {
   applyCollectionQuickFilters,
   applyCollectionSort,
   applyCollectionFilters,
+  getUniqueEntryValues,
   getCollectionFilterRuleCount,
   getDefaultCollectionFilter,
   isCollectionFilterActive,
@@ -18,6 +19,7 @@ import { MtFilterDropdown } from '../../../MtFilter';
 import { MtSortDropdown, MtSortRule } from '../../../MtSort';
 import { MtDropdown, MtDropdownItem } from '../../../MtDropdown';
 import { MtCollectionTaskListEntry } from '../MtCollectionTaskListEntry';
+import type { MtCollectionAssigneeOption } from '../MtCollectionEntryControls';
 
 const REQUIRED_VISIBLE_PROPERTY_IDS = ['summary'];
 
@@ -143,6 +145,16 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [props.viewSettings?.visiblePropertyIds, properties],
   );
   const visiblePropertySet = React.useMemo(() => new Set(visiblePropertyIds), [visiblePropertyIds]);
+  const assigneeOptions = React.useMemo<MtCollectionAssigneeOption[]>(() => {
+    if (props.assigneeOptions && props.assigneeOptions.length > 0) {
+      return props.assigneeOptions;
+    }
+
+    return getUniqueEntryValues(entryState, 'assignee').map((value) => ({
+      value,
+      label: value,
+    }));
+  }, [entryState, props.assigneeOptions]);
 
   const EntryComponent = props.renderEntry;
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -172,6 +184,24 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [toolbarFilteredEntries, sortRules, selectedSortBy],
   );
   const rows = React.useMemo(() => buildRows(sortedEntries, props.groupBy), [sortedEntries, props.groupBy]);
+
+  const applyEntryPatch = React.useCallback(
+    (entry: any, patch: Record<string, unknown>) => {
+      const entryId = String(entry?.id ?? '');
+      setEntryPatches((previousPatches) => ({
+        ...previousPatches,
+        [entryId]: {
+          ...(previousPatches[entryId] ?? {}),
+          ...patch,
+        },
+      }));
+
+      if (props.onUpdateEntry) {
+        void props.onUpdateEntry(entry, patch as any);
+      }
+    },
+    [props],
+  );
 
   // TEMP, see: https://github.com/facebook/react/issues/33057
   // eslint-disable-next-line react-hooks/incompatible-library -- opted out of memoization via "use no memo"
@@ -209,48 +239,25 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
                 <MtCollectionTaskListEntry
                   entry={row.entry}
                   visiblePropertySet={visiblePropertySet}
+                  assigneeOptions={assigneeOptions}
                   onSummaryChange={(nextSummary) => {
-                    const entryId = String(row.entry?.id ?? '');
-                    setEntryPatches((previousPatches) => ({
-                      ...previousPatches,
-                      [entryId]: {
-                        ...(previousPatches[entryId] ?? {}),
-                        summary: nextSummary,
-                      },
-                    }));
+                    applyEntryPatch(row.entry, { summary: nextSummary });
                   }}
                   onPriorityChange={(nextPriority) => {
-                    const entryId = String(row.entry?.id ?? '');
-                    setEntryPatches((previousPatches) => ({
-                      ...previousPatches,
-                      [entryId]: {
-                        ...(previousPatches[entryId] ?? {}),
-                        priority: nextPriority,
-                      },
-                    }));
+                    applyEntryPatch(row.entry, { priority: nextPriority });
                   }}
                   onStatusChange={(nextStatus) => {
-                    const entryId = String(row.entry?.id ?? '');
-                    setEntryPatches((previousPatches) => ({
-                      ...previousPatches,
-                      [entryId]: {
-                        ...(previousPatches[entryId] ?? {}),
-                        status: nextStatus,
-                        state: nextStatus,
-                      },
-                    }));
+                    applyEntryPatch(row.entry, { status: nextStatus, state: nextStatus });
                   }}
                   onIssueTypeChange={(nextType) => {
-                    const entryId = String(row.entry?.id ?? '');
-                    setEntryPatches((previousPatches) => ({
-                      ...previousPatches,
-                      [entryId]: {
-                        ...(previousPatches[entryId] ?? {}),
-                        type: nextType,
-                        entryType: nextType,
-                        issueType: nextType,
-                      },
-                    }));
+                    applyEntryPatch(row.entry, {
+                      type: nextType,
+                      entryType: nextType,
+                      issueType: nextType,
+                    });
+                  }}
+                  onAssigneeChange={(nextAssignee) => {
+                    applyEntryPatch(row.entry, { assignee: nextAssignee });
                   }}
                 />
               )}
