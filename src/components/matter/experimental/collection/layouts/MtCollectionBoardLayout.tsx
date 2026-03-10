@@ -70,6 +70,9 @@ function DefaultBoardEntry({
   onIssueTypeChange,
   visiblePropertySet,
   parentDisplayId,
+  statusOptions,
+  priorityOptions,
+  issueTypeOptions,
 }: {
   entry: any;
   onSummaryChange: (nextSummary: string) => void;
@@ -78,6 +81,9 @@ function DefaultBoardEntry({
   onIssueTypeChange: (nextType: string) => void;
   visiblePropertySet: Set<string>;
   parentDisplayId?: string;
+  statusOptions?: string[];
+  priorityOptions?: string[];
+  issueTypeOptions?: string[];
 }) {
   const displayId = getCollectionEntryId(entry);
   const priority = getCollectionEntryPriority(entry);
@@ -124,17 +130,21 @@ function DefaultBoardEntry({
       {showMetaRow ? (
         <div className="flex row justify-between items-center px-1">
           <div className="flex row gap-2 items-center min-w-0">
-            {showIssueType ? <MtIssueTypeSelect value={entryType} onChange={onIssueTypeChange} /> : null}
+            {showIssueType ? (
+              <MtIssueTypeSelect value={entryType} options={issueTypeOptions} onChange={onIssueTypeChange} />
+            ) : null}
             {showId ? (
               <>
                 {!showIssueType ? <EntryTypeIcon size={14} stroke="#608a23" /> : null}
                 <div className="text-xs text-text-primary">{displayId}</div>
               </>
             ) : null}
-            {showStatus ? <MtStateSelect value={status} onChange={onStatusChange} /> : null}
+            {showStatus ? <MtStateSelect value={status} options={statusOptions} onChange={onStatusChange} /> : null}
           </div>
           <div className="flex items-center gap-2 text-xs text-text-primary">
-            {showPriority ? <MtPrioirtySelect value={priority} onChange={onPriorityChange} /> : null}
+            {showPriority ? (
+              <MtPrioirtySelect value={priority} options={priorityOptions} onChange={onPriorityChange} />
+            ) : null}
             {showAssignee ? <MtAvatar name={String(assignee ?? '')} size="xs" /> : null}
           </div>
         </div>
@@ -143,7 +153,7 @@ function DefaultBoardEntry({
   );
 }
 
-function groupEntries(entries: any[], groupBy?: string | null) {
+function groupEntries(entries: any[], groupBy?: string | null, properties?: Array<any>) {
   if (!groupBy) {
     return [{ key: 'all', label: 'All', entries }];
   }
@@ -161,6 +171,28 @@ function groupEntries(entries: any[], groupBy?: string | null) {
     grouped.get(groupKey)!.push(entry);
   });
 
+  // Find property metadata for discrete values
+  const groupProperty = properties?.find((p) => p.id === groupBy);
+  const discreteValues = (groupProperty?.discreteValues as string[] | undefined) ?? [];
+
+  // If property has discrete values, ensure all are represented as columns
+  if (discreteValues.length > 0) {
+    const result = discreteValues.map((value) => ({
+      key: `${groupBy}-${value}`,
+      label: value,
+      entries: grouped.get(value) ?? [],
+    }));
+    // Add ungrouped if it has entries
+    if (grouped.has('Ungrouped')) {
+      result.push({
+        key: `${groupBy}-Ungrouped`,
+        label: 'Ungrouped',
+        entries: grouped.get('Ungrouped')!,
+      });
+    }
+    return result;
+  }
+
   return Array.from(grouped.entries()).map(([label, groupedEntries]) => ({
     key: `${groupBy}-${label}`,
     label,
@@ -173,6 +205,18 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
   const properties = React.useMemo(
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
     [props.properties],
+  );
+  const statusOptions = React.useMemo(
+    () => properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+    [properties],
+  );
+  const priorityOptions = React.useMemo(
+    () => properties.find((property) => property.id === 'priority')?.discreteValues,
+    [properties],
+  );
+  const issueTypeOptions = React.useMemo(
+    () => properties.find((property) => ['type', 'entryType', 'issueType'].includes(property.id))?.discreteValues,
+    [properties],
   );
   const visiblePropertyIds = React.useMemo(
     () =>
@@ -216,7 +260,7 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
     [filteredEntries, quickFilters],
   );
   const sortedEntries = applyCollectionSort(toolbarFilteredEntries, sortRules, sortBy);
-  const columns = groupEntries(sortedEntries, effectiveGroupBy);
+  const columns = groupEntries(sortedEntries, effectiveGroupBy, properties);
 
   const updateEntry = (entryId: string, patch: Record<string, unknown>) => {
     setEntryState((previousEntries) =>
@@ -309,6 +353,9 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                     <DefaultBoardEntry
                       entry={entry}
                       visiblePropertySet={visiblePropertySet}
+                      statusOptions={statusOptions}
+                      priorityOptions={priorityOptions}
+                      issueTypeOptions={issueTypeOptions}
                       parentDisplayId={
                         entry?.parentId
                           ? String(

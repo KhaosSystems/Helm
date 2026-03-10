@@ -31,6 +31,7 @@ export interface MtCollectionProperty {
   id: string;
   label: string;
   groupable?: boolean;
+  discreteValues?: string[];
 }
 
 export interface MtCollectionViewSettingsState {
@@ -133,6 +134,8 @@ export interface MtCollectionLayoutProps<T extends MtCollectionEntry> {
 export interface MtCollectionProps<T extends MtCollectionEntry> {
   entries: T[];
   views: MtCollectionView<T>[];
+  /** Optional template views used when creating new views from available layouts. */
+  viewTemplates?: MtCollectionView<T>[];
   properties?: MtCollectionProperty[];
   /**  Undefined will render default toolbar, null will render no toolbar. */
   toolbar?: ReactNode | null;
@@ -148,6 +151,10 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   subtasksEnabled?: boolean;
   /** Called when the user clicks "+ Add subtask" for a parent entry. */
   onAddSubtask?: (parentEntry: T) => void | Promise<void>;
+  /** Persist a view and optionally return its persisted id. */
+  onSaveView?: (view: MtCollectionView<T>) => Promise<string | void>;
+  /** Delete a persisted view. */
+  onDeleteView?: (viewId: string) => Promise<void>;
 }
 
 /**
@@ -156,6 +163,7 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
 export function MtCollection<T extends MtCollectionEntry>({
   entries,
   views,
+  viewTemplates,
   properties = [{ id: 'id', label: 'ID' }],
   toolbar,
   renderEntry,
@@ -167,6 +175,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   onAddEntry,
   subtasksEnabled,
   onAddSubtask,
+  onSaveView,
+  onDeleteView,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -212,7 +222,15 @@ export function MtCollection<T extends MtCollectionEntry>({
     setCurrentViewId(nextView.id);
   };
 
-  const addView = (nextView: MtCollectionView<T>) => {
+  const addView = async (nextView: MtCollectionView<T>) => {
+    if (onSaveView) {
+      const persistedId = await onSaveView(nextView);
+      if (persistedId) {
+        setCurrentViewId(persistedId);
+      }
+      return;
+    }
+
     setViewState((previousViews) => [...previousViews, nextView]);
     setDefaultViewState((previousDefaults) => ({
       ...previousDefaults,
@@ -234,7 +252,9 @@ export function MtCollection<T extends MtCollectionEntry>({
     );
   };
 
-  const deleteView = (viewId: string) => {
+  const deleteView = async (viewId: string) => {
+    await onDeleteView?.(viewId);
+
     setViewState((previousViews) => {
       const nextViews = previousViews.filter((view) => view.id !== viewId);
 
@@ -272,15 +292,43 @@ export function MtCollection<T extends MtCollectionEntry>({
     return !areViewDefaultsEqual(currentSnapshot, defaultSnapshot);
   })();
 
-  const saveCurrentViewAsDefault = () => {
+  const saveCurrentViewAsDefault = async () => {
     if (!currentView) {
       return;
     }
 
-    setDefaultViewState((previousDefaults) => ({
-      ...previousDefaults,
-      [currentView.id]: buildViewDefaultSnapshot(currentView),
-    }));
+    const persistedId = await onSaveView?.(currentView);
+
+    if (persistedId && persistedId !== currentView.id) {
+      setViewState((previousViews) =>
+        previousViews.map((view) =>
+          view.id === currentView.id
+            ? {
+                ...view,
+                id: persistedId,
+              }
+            : view,
+        ),
+      );
+
+      setCurrentViewId((previousId) => (previousId === currentView.id ? persistedId : previousId));
+    }
+
+    setDefaultViewState((previousDefaults) => {
+      const nextDefaults = { ...previousDefaults };
+      const nextId = persistedId ?? currentView.id;
+
+      if (persistedId && persistedId !== currentView.id) {
+        delete nextDefaults[currentView.id];
+      }
+
+      nextDefaults[nextId] = buildViewDefaultSnapshot({
+        ...currentView,
+        id: nextId,
+      });
+
+      return nextDefaults;
+    });
   };
 
   const revertCurrentViewToDefault = () => {
@@ -322,6 +370,7 @@ export function MtCollection<T extends MtCollectionEntry>({
         entries,
         onAddEntry,
         views: viewState,
+        viewTemplates: viewTemplates ?? views,
         currentView,
         setCurrentView,
         addView,

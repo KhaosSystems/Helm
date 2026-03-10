@@ -10,6 +10,7 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   entries: T[];
   onAddEntry?: () => void | Promise<void>;
   views: MtCollectionView<T>[];
+  viewTemplates: MtCollectionView<T>[];
   currentView: MtCollectionView<T> | null;
   showViewSettings: boolean;
   setShowViewSettings: (show: boolean) => void;
@@ -21,11 +22,11 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   properties: MtCollectionProperty[];
   setProperties: (properties: MtCollectionProperty[]) => void;
   setCurrentView: (view: MtCollectionView<T> | null) => void;
-  addView: (view: MtCollectionView<T>) => void;
+  addView: (view: MtCollectionView<T>) => void | Promise<void>;
   updateView: (viewId: string, patch: Partial<MtCollectionView<T>>) => void;
-  deleteView: (viewId: string) => void;
+  deleteView: (viewId: string) => void | Promise<void>;
   hasCurrentViewUnsavedChanges: boolean;
-  saveCurrentViewAsDefault: () => void;
+  saveCurrentViewAsDefault: () => void | Promise<void>;
   revertCurrentViewToDefault: () => void;
 }
 

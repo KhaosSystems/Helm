@@ -11,6 +11,7 @@ import { MtCollectionViewIcon } from './MtIconSelect';
 export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
   const {
     views,
+    viewTemplates,
     currentView,
     setCurrentView,
     entries,
@@ -24,29 +25,29 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
   } = useMtCollection /*<T>*/();
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [isAddViewOpen, setIsAddViewOpen] = React.useState(false);
-  const [templateLayoutName, setTemplateLayoutName] = React.useState<string>(views[0]?.layout?.name ?? '');
+  const [templateLayoutName, setTemplateLayoutName] = React.useState<string>(viewTemplates[0]?.id ?? views[0]?.id ?? '');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const nextViewIdRef = React.useRef(views.length + 1);
   const availableLayouts = React.useMemo(() => {
-    const seen = new Set<string>();
+    const seen = new Set<unknown>();
     const layouts: Array<{ id: string; name: string; templateView: (typeof views)[number] }> = [];
 
-    views.forEach((view) => {
-      const layoutName = view.layout?.name ?? 'Layout';
-      if (seen.has(layoutName)) {
+    (viewTemplates.length > 0 ? viewTemplates : views).forEach((view) => {
+      const layoutKey = view.layout;
+      if (seen.has(layoutKey)) {
         return;
       }
 
-      seen.add(layoutName);
+      seen.add(layoutKey);
       layouts.push({
-        id: layoutName,
-        name: layoutName,
+        id: view.id,
+        name: view.name || view.layout?.name || 'Layout',
         templateView: view,
       });
     });
 
     return layouts;
-  }, [views]);
+  }, [viewTemplates, views]);
 
   const LayoutToolbarActions = currentView?.layout.ToolbarActions;
 
@@ -129,7 +130,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
       return;
     }
 
-    const baseName = templateView.layout?.name ?? 'View';
+    const baseName = templateLayout?.name ?? templateView.name ?? templateView.layout?.name ?? 'View';
     const existingCount = views.filter((view) => view.name.startsWith(baseName)).length;
     const viewName = existingCount > 0 ? `${baseName} ${existingCount + 1}` : baseName;
 
@@ -172,7 +173,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     <div className="flex items-center border-b border-[#2A2A2A] h-11 px-4">
       {/** Views */}
       <div className="flex items-center gap-1.5">
-        {views.length > 1 &&
+        {views.length > 0 &&
           views.map((view) => (
             <WithContextMenu
               key={view.id}
@@ -233,6 +234,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
               )}
             </WithContextMenu>
           ))}
+        {views.length === 0 ? <span className="text-sm text-text-muted">No views</span> : null}
         <div className="border-r border-[#2A2A2A] h-6"></div>
         <MtPopover
           open={isAddViewOpen}

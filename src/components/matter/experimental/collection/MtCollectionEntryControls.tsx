@@ -9,7 +9,7 @@ import {
   MtMediumIcon,
   MtOpenIcon,
 } from '../../MtIcon';
-import { Bookmark, Bug, FileText, ListTodo, Sparkles } from 'lucide-react';
+import { Bookmark, Bug, CircleSlash2, Copy, FileText, ListTodo, Sparkles } from 'lucide-react';
 
 export type MtCollectionAssigneeOption = {
   value: string;
@@ -31,6 +31,8 @@ const STATUS_OPTIONS = [
   { value: 'open', label: 'Open', icon: <MtOpenIcon /> },
   { value: 'in progress', label: 'In Progress', icon: <MtInProgressIcon /> },
   { value: 'done', label: 'Done', icon: <MtCheckIcon /> },
+  { value: 'abandoned', label: 'Abandoned', icon: <CircleSlash2 size={14} stroke="#9CA3AF" /> },
+  { value: 'duplicate', label: 'Duplicate', icon: <Copy size={14} stroke="#9CA3AF" /> },
 ];
 
 const ISSUE_TYPE_OPTIONS = [
@@ -41,7 +43,38 @@ const ISSUE_TYPE_OPTIONS = [
   { value: 'task', label: 'Task', icon: <ListTodo size={14} stroke="#22C55E" /> },
 ];
 
-export function MtPrioritySelect({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+type MtSelectOption = {
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
+};
+
+function titleCaseLabel(value: string) {
+  return value
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function normalizeOptions(values: string[] | undefined, fallback: MtSelectOption[]) {
+  if (!values || values.length === 0) {
+    return fallback;
+  }
+
+  const fallbackByValue = new Map(fallback.map((option) => [option.value, option]));
+  return values.map((value) => fallbackByValue.get(value) ?? { value, label: titleCaseLabel(value) });
+}
+
+export function MtPrioritySelect({
+  value,
+  onChange,
+  options,
+}: {
+  value?: string;
+  onChange: (value: string) => void;
+  options?: string[];
+}) {
   return (
     <MtSelect
       kind="icon"
@@ -49,14 +82,22 @@ export function MtPrioritySelect({ value, onChange }: { value?: string; onChange
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={PRIORITY_OPTIONS}
+      options={normalizeOptions(options, PRIORITY_OPTIONS)}
     />
   );
 }
 
 export const MtPrioirtySelect = MtPrioritySelect;
 
-export function MtStateSelect({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+export function MtStateSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value?: string;
+  onChange: (value: string) => void;
+  options?: string[];
+}) {
   return (
     <MtSelect
       kind="icon"
@@ -64,12 +105,20 @@ export function MtStateSelect({ value, onChange }: { value?: string; onChange: (
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={STATUS_OPTIONS}
+      options={normalizeOptions(options, STATUS_OPTIONS)}
     />
   );
 }
 
-export function MtIssueTypeSelect({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+export function MtIssueTypeSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value?: string;
+  onChange: (value: string) => void;
+  options?: string[];
+}) {
   return (
     <MtSelect
       kind="icon"
@@ -77,7 +126,7 @@ export function MtIssueTypeSelect({ value, onChange }: { value?: string; onChang
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={ISSUE_TYPE_OPTIONS}
+      options={normalizeOptions(options, ISSUE_TYPE_OPTIONS)}
     />
   );
 }

@@ -14,6 +14,9 @@ import {
 type MtCollectionTaskListEntryProps = {
   entry: any;
   visiblePropertySet: Set<string>;
+  statusOptions?: string[];
+  priorityOptions?: string[];
+  issueTypeOptions?: string[];
   onSummaryChange?: (nextSummary: string) => void;
   onPriorityChange?: (nextPriority: string) => void;
   onStatusChange?: (nextStatus: string) => void;
@@ -35,6 +38,9 @@ type MtCollectionTaskListEntryProps = {
 export function MtCollectionTaskListEntry({
   entry,
   visiblePropertySet,
+  statusOptions,
+  priorityOptions,
+  issueTypeOptions,
   onSummaryChange,
   onPriorityChange,
   onStatusChange,
@@ -119,6 +125,7 @@ export function MtCollectionTaskListEntry({
       {showPriority ? (
         <MtPrioirtySelect
           value={priorityState}
+          options={priorityOptions}
           onChange={(nextPriority) => {
             setPriorityState(nextPriority);
             onPriorityChange?.(nextPriority);
@@ -129,6 +136,7 @@ export function MtCollectionTaskListEntry({
       {showIssueType ? (
         <MtIssueTypeSelect
           value={entryTypeState}
+          options={issueTypeOptions}
           onChange={(nextType) => {
             setEntryTypeState(nextType);
             onIssueTypeChange?.(nextType);
@@ -146,6 +154,7 @@ export function MtCollectionTaskListEntry({
       {showStatus ? (
         <MtStateSelect
           value={statusState}
+          options={statusOptions}
           onChange={(nextStatus) => {
             setStatusState(nextStatus);
             onStatusChange?.(nextStatus);

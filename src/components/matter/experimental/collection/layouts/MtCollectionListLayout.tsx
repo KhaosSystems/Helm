@@ -201,6 +201,18 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
     [props.properties],
   );
+  const statusOptions = React.useMemo(
+    () => properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+    [properties],
+  );
+  const priorityOptions = React.useMemo(
+    () => properties.find((property) => property.id === 'priority')?.discreteValues,
+    [properties],
+  );
+  const issueTypeOptions = React.useMemo(
+    () => properties.find((property) => ['type', 'entryType', 'issueType'].includes(property.id))?.discreteValues,
+    [properties],
+  );
   const [entryPatches, setEntryPatches] = React.useState<Record<string, Record<string, unknown>>>({});
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const subtasksEnabled = Boolean(props.subtasksEnabled);
@@ -346,6 +358,9 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
                 <MtCollectionTaskListEntry
                   entry={row.entry}
                   visiblePropertySet={visiblePropertySet}
+                  statusOptions={statusOptions}
+                  priorityOptions={priorityOptions}
+                  issueTypeOptions={issueTypeOptions}
                   assigneeOptions={assigneeOptions}
                   depth={row.depth}
                   subtasksEnabled={subtasksEnabled}
