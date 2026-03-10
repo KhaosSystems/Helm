@@ -4,6 +4,12 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @plugin "@tailwindcss/typography";
+/*
+ * Required for monorepo source consumption (e.g. apps/anchor via Vite alias).
+ * Ensures Tailwind scans Helm component files when this stylesheet is compiled
+ * outside the helm package root, so app rendering matches Storybook output.
+ */
+@source "./**/*.{ts,tsx}";
 
 /**
  * Source inline to ensure that these utilities are included in the final CSS
