@@ -1,6 +1,6 @@
 import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowUpDown, ChevronRight, Columns3, Layers3, ListFilter, X } from 'lucide-react';
+import { ArrowUpDown, ChevronRight, Columns3, Layers3, ListFilter, Plus, X } from 'lucide-react';
 import React from 'react';
 import { MtDrawerMenuItem, MtDrawerMenuPage, MtDrawerMenuSection } from '../MtCollectionViewSettings';
 import { useMtCollection } from '../MtCollectionContext';
@@ -72,33 +72,117 @@ const ENTRY_HEIGHT = 44;
 
 type FlatRow =
   | { type: 'group'; key: string; label: string; count: number }
-  | { type: 'entry'; key: string; entry: any };
+  | { type: 'entry'; key: string; entry: any; depth: number; hasSubtasks: boolean; isExpanded: boolean }
+  | { type: 'add-subtask'; key: string; parentEntry: any; depth: number };
 
-function buildRows(entries: any[], groupBy?: string | null): FlatRow[] {
-  if (!groupBy) {
-    return entries.map((entry) => ({
+function buildRows(
+  entries: any[],
+  groupBy: string | null | undefined,
+  subtasksEnabled: boolean,
+  expandedIds: Set<string>,
+): FlatRow[] {
+  if (!subtasksEnabled) {
+    if (!groupBy) {
+      return entries.map((entry) => ({
+        type: 'entry' as const,
+        key: `entry-${entry.id ?? entry._id}`,
+        entry,
+        depth: 0,
+        hasSubtasks: false,
+        isExpanded: false,
+      }));
+    }
+
+    const grouped = new Map<string, any[]>();
+    entries.forEach((entry) => {
+      const rawValue = entry?.[groupBy as keyof typeof entry];
+      const groupKey = rawValue === null || rawValue === undefined || rawValue === '' ? 'Ungrouped' : String(rawValue);
+      if (!grouped.has(groupKey)) grouped.set(groupKey, []);
+      grouped.get(groupKey)!.push(entry);
+    });
+
+    const rows: FlatRow[] = [];
+    grouped.forEach((groupEntries, groupLabel) => {
+      rows.push({
+        type: 'group',
+        key: `group-${groupBy}-${groupLabel}`,
+        label: groupLabel,
+        count: groupEntries.length,
+      });
+      groupEntries.forEach((entry) => {
+        rows.push({
+          type: 'entry',
+          key: `entry-${entry.id ?? entry._id}`,
+          entry,
+          depth: 0,
+          hasSubtasks: false,
+          isExpanded: false,
+        });
+      });
+    });
+    return rows;
+  }
+
+  // Subtasks-enabled path
+  const entryConvexIdSet = new Set(entries.map((e) => String(e._id ?? e.id ?? '')));
+
+  const childrenByParentId = new Map<string, any[]>();
+  for (const entry of entries) {
+    if (entry.parentId) {
+      const parentKey = String(entry.parentId);
+      if (!childrenByParentId.has(parentKey)) childrenByParentId.set(parentKey, []);
+      childrenByParentId.get(parentKey)!.push(entry);
+    }
+  }
+
+  const topLevelEntries = entries.filter(
+    (entry) => !entry.parentId || !entryConvexIdSet.has(String(entry.parentId)),
+  );
+
+  function appendEntry(rows: FlatRow[], entry: any, depth: number) {
+    const convexId = String(entry._id ?? entry.id ?? '');
+    const children = childrenByParentId.get(convexId) ?? [];
+    const hasSubtasks = children.length > 0;
+    const isExpanded = expandedIds.has(convexId);
+
+    rows.push({
       type: 'entry',
-      key: `entry-${entry.id}`,
+      key: `entry-${entry.id ?? entry._id}`,
       entry,
-    }));
+      depth,
+      hasSubtasks,
+      isExpanded,
+    });
+
+    if (isExpanded) {
+      for (const child of children) {
+        appendEntry(rows, child, depth + 1);
+      }
+      rows.push({
+        type: 'add-subtask',
+        key: `add-subtask-${convexId}`,
+        parentEntry: entry,
+        depth: depth + 1,
+      });
+    }
+  }
+
+  if (!groupBy) {
+    const rows: FlatRow[] = [];
+    for (const entry of topLevelEntries) {
+      appendEntry(rows, entry, 0);
+    }
+    return rows;
   }
 
   const grouped = new Map<string, any[]>();
-
-  entries.forEach((entry) => {
+  topLevelEntries.forEach((entry) => {
     const rawValue = entry?.[groupBy as keyof typeof entry];
     const groupKey = rawValue === null || rawValue === undefined || rawValue === '' ? 'Ungrouped' : String(rawValue);
-    const groupEntries = grouped.get(groupKey);
-
-    if (groupEntries) {
-      groupEntries.push(entry);
-      return;
-    }
-
-    grouped.set(groupKey, [entry]);
+    if (!grouped.has(groupKey)) grouped.set(groupKey, []);
+    grouped.get(groupKey)!.push(entry);
   });
 
-  // Flatten groups into a single array of rows, interleaving group headers with entries.
   const rows: FlatRow[] = [];
   grouped.forEach((groupEntries, groupLabel) => {
     rows.push({
@@ -107,16 +191,10 @@ function buildRows(entries: any[], groupBy?: string | null): FlatRow[] {
       label: groupLabel,
       count: groupEntries.length,
     });
-
-    groupEntries.forEach((entry) => {
-      rows.push({
-        type: 'entry',
-        key: `entry-${entry.id}`,
-        entry,
-      });
-    });
+    for (const entry of groupEntries) {
+      appendEntry(rows, entry, 0);
+    }
   });
-
   return rows;
 }
 
@@ -126,6 +204,8 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [props.properties],
   );
   const [entryPatches, setEntryPatches] = React.useState<Record<string, Record<string, unknown>>>({});
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+  const subtasksEnabled = Boolean(props.subtasksEnabled);
 
   const entryState = React.useMemo(
     () =>
@@ -183,7 +263,22 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     () => applyCollectionSort(toolbarFilteredEntries, sortRules, selectedSortBy),
     [toolbarFilteredEntries, sortRules, selectedSortBy],
   );
-  const rows = React.useMemo(() => buildRows(sortedEntries, props.groupBy), [sortedEntries, props.groupBy]);
+  const rows = React.useMemo(
+    () => buildRows(sortedEntries, props.groupBy, subtasksEnabled, expandedIds),
+    [sortedEntries, props.groupBy, subtasksEnabled, expandedIds],
+  );
+
+  const toggleExpanded = React.useCallback((convexId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(convexId)) {
+        next.delete(convexId);
+      } else {
+        next.add(convexId);
+      }
+      return next;
+    });
+  }, []);
 
   const applyEntryPatch = React.useCallback(
     (entry: any, patch: Record<string, unknown>) => {
@@ -233,6 +328,20 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
             >
               {row.type === 'group' ? (
                 <MtCollectionListGroup label={row.label} count={row.count} />
+              ) : row.type === 'add-subtask' ? (
+                <div
+                  className="flex items-center border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
+                  style={{ paddingLeft: `${row.depth * 20 + 16}px` }}
+                >
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-text-muted hover:text-text-primary transition-colors text-xs"
+                    onClick={() => props.onAddSubtask?.(row.parentEntry)}
+                  >
+                    <Plus size={12} />
+                    Add subtask
+                  </button>
+                </div>
               ) : EntryComponent ? (
                 <EntryComponent entry={row.entry} />
               ) : (
@@ -240,6 +349,11 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
                   entry={row.entry}
                   visiblePropertySet={visiblePropertySet}
                   assigneeOptions={assigneeOptions}
+                  depth={row.depth}
+                  subtasksEnabled={subtasksEnabled}
+                  hasSubtasks={row.hasSubtasks}
+                  isExpanded={row.isExpanded}
+                  onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
                   onSummaryChange={(nextSummary) => {
                     applyEntryPatch(row.entry, { summary: nextSummary });
                   }}

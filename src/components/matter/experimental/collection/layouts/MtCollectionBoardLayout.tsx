@@ -5,6 +5,7 @@ import {
   Bug,
   ChevronRight,
   Columns3,
+  CornerLeftUp,
   FileText,
   Layers3,
   ListFilter,
@@ -68,6 +69,7 @@ function DefaultBoardEntry({
   onStatusChange,
   onIssueTypeChange,
   visiblePropertySet,
+  parentDisplayId,
 }: {
   entry: any;
   onSummaryChange: (nextSummary: string) => void;
@@ -75,6 +77,7 @@ function DefaultBoardEntry({
   onStatusChange: (nextStatus: string) => void;
   onIssueTypeChange: (nextType: string) => void;
   visiblePropertySet: Set<string>;
+  parentDisplayId?: string;
 }) {
   const displayId = getCollectionEntryId(entry);
   const priority = getCollectionEntryPriority(entry);
@@ -110,6 +113,12 @@ function DefaultBoardEntry({
 
   return (
     <div className="rounded border border-[#2A2A2A] bg-[#141414] p-3 text-sm">
+      {parentDisplayId ? (
+        <div className="flex items-center gap-1 text-text-muted text-xs mb-1.5">
+          <CornerLeftUp size={11} />
+          <span>{parentDisplayId}</span>
+        </div>
+      ) : null}
       {showSummary ? <MtCollectionSummaryInput value={summary} onChange={onSummaryChange} /> : null}
 
       {showMetaRow ? (
@@ -176,6 +185,12 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
   const [entryState, setEntryState] = React.useState(props.entries);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dragOverColumnKey, setDragOverColumnKey] = React.useState<string | null>(null);
+
+  // Map from Convex _id -> entry for parent lookup
+  const entryByConvexId = React.useMemo(
+    () => new Map(props.entries.map((e: any) => [String(e._id ?? ''), e])),
+    [props.entries],
+  );
 
   React.useEffect(() => {
     setEntryState(props.entries);
@@ -294,6 +309,15 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                     <DefaultBoardEntry
                       entry={entry}
                       visiblePropertySet={visiblePropertySet}
+                      parentDisplayId={
+                        entry?.parentId
+                          ? String(
+                              entryByConvexId.get(String(entry.parentId))?.id ??
+                              entryByConvexId.get(String(entry.parentId))?._id ??
+                              entry.parentId,
+                            )
+                          : undefined
+                      }
                       onSummaryChange={(nextSummary) => {
                         updateEntry(String(entry?.id), { summary: nextSummary });
                       }}

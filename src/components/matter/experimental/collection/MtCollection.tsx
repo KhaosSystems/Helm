@@ -121,6 +121,10 @@ export interface MtCollectionLayoutProps<T extends MtCollectionEntry> {
   assigneeOptions?: MtCollectionAssigneeOption[];
   /** Optional callback invoked when a layout updates an entry field. */
   onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
+  /** When true, subtask expand/collapse and add-subtask controls are shown. */
+  subtasksEnabled?: boolean;
+  /** Called when the user clicks "+ Add subtask" for a parent entry. */
+  onAddSubtask?: (parentEntry: T) => void | Promise<void>;
 }
 
 /**
@@ -140,6 +144,10 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   assigneeOptions?: MtCollectionAssigneeOption[];
   onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
   onAddEntry?: () => void | Promise<void>;
+  /** When true, subtask expand/collapse and add-subtask controls are shown. */
+  subtasksEnabled?: boolean;
+  /** Called when the user clicks "+ Add subtask" for a parent entry. */
+  onAddSubtask?: (parentEntry: T) => void | Promise<void>;
 }
 
 /**
@@ -157,6 +165,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   assigneeOptions,
   onUpdateEntry,
   onAddEntry,
+  subtasksEnabled,
+  onAddSubtask,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -351,6 +361,8 @@ export function MtCollection<T extends MtCollectionEntry>({
                 renderEntry={currentView.renderEntry ?? renderEntry}
                 assigneeOptions={assigneeOptions}
                 onUpdateEntry={onUpdateEntry}
+                subtasksEnabled={subtasksEnabled}
+                onAddSubtask={onAddSubtask}
               />
             ) : (
               <div>No view selected</div>
