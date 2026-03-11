@@ -11,8 +11,8 @@ import {
   getUniqueEntryValues,
   isCollectionFilterActive,
   COLLECTION_SORT_FIELDS,
-  COLLECTION_FILTER_FIELDS,
   COLLECTION_FILTER_OPERATORS,
+  buildCollectionFilterFields,
   type MtCollectionFilterState,
   type MtCollectionQuickFilterState,
 } from '../MtCollectionEntryUtils';
@@ -372,11 +372,13 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
 
 function MtCollectionPlanLayoutSettingsMenu({
   currentView,
+  properties,
   viewSettings,
   setViewSettings,
   setCurrentView,
 }: MtCollectionLayoutSettingsProps<any>) {
   const filterState = (viewSettings.filter ?? {}) as MtCollectionFilterState;
+  const filterFields = React.useMemo(() => buildCollectionFilterFields(properties), [properties]);
   const activeFilterCount = getCollectionFilterRuleCount(filterState);
   const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
 
@@ -430,7 +432,7 @@ function MtCollectionPlanLayoutSettingsMenu({
                   },
                 });
               }}
-              fields={COLLECTION_FILTER_FIELDS}
+              fields={filterFields}
               operators={COLLECTION_FILTER_OPERATORS}
               variant="ghost"
             />
@@ -462,6 +464,8 @@ MtCollectionPlanLayout.SettingsMenu = MtCollectionPlanLayoutSettingsMenu;
 function MtCollectionPlanLayoutToolbarActions() {
   const context = useMtCollection();
   const currentView = context.currentView;
+  const properties = context.properties;
+  const filterFields = React.useMemo(() => buildCollectionFilterFields(properties), [properties]);
 
   if (!currentView) {
     return null;
@@ -516,7 +520,7 @@ function MtCollectionPlanLayoutToolbarActions() {
           showCaret={false}
           value={currentFilter}
           onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-          fields={COLLECTION_FILTER_FIELDS}
+          fields={filterFields}
           operators={COLLECTION_FILTER_OPERATORS}
         />
         {hasFilter ? (

@@ -22,10 +22,17 @@ export type MtFilterGroup = {
 
 export type MtFilterNode = MtFilterRule | MtFilterGroup;
 
+export type MtFilterFieldOption = {
+  value: string;
+  label?: string;
+};
+
 export type MtFilterField = {
   value: string;
   label: string;
   icon?: React.ReactNode;
+  /** When provided, the value input becomes a dropdown with these options. */
+  options?: MtFilterFieldOption[];
 };
 
 export type MtFilterOperator = {
@@ -161,7 +168,9 @@ export function MtFilterDropdown({
     const operator = operatorByValue.get(rule.operator);
     const requiresValue = operator?.requiresValue ?? true;
 
-    const fieldIcon = fieldByValue.get(rule.field)?.icon;
+    const fieldDef = fieldByValue.get(rule.field);
+    const fieldIcon = fieldDef?.icon;
+    const fieldOptions = fieldDef?.options;
 
     return (
       <div className="flex items-center gap-2 rounded-md border border-border-default bg-surface-subtle px-2 py-1.5">
@@ -171,7 +180,7 @@ export function MtFilterDropdown({
         <MtSelect
           value={rule.field}
           onValueChange={(nextValue) => {
-            const nextRule = { ...rule, field: nextValue };
+            const nextRule = { ...rule, field: nextValue, value: null };
             updateRoot({
               ...value,
               conjunction: 'AND',
@@ -217,20 +226,44 @@ export function MtFilterDropdown({
         </MtSelect>
 
         {requiresValue ? (
-          <MtInput
-            className="flex-1 w-full text-xs"
-            placeholder="Value"
-            value={rule.value ?? ''}
-            onChange={(event) => {
-              const nextRule = { ...rule, value: event.target.value };
-              updateRoot({
-                ...value,
-                conjunction: 'AND',
-                children: [nextRule],
-              });
-            }}
-            variant="ghost"
-          />
+          fieldOptions && fieldOptions.length > 0 ? (
+            <MtSelect
+              value={rule.value ?? ''}
+              onValueChange={(nextValue) => {
+                const nextRule = { ...rule, value: nextValue };
+                updateRoot({
+                  ...value,
+                  conjunction: 'AND',
+                  children: [nextRule],
+                });
+              }}
+              variant="ghost"
+              size="medium"
+              showCaret={false}
+              className="flex-1 text-xs"
+            >
+              {fieldOptions.map((opt) => (
+                <MtSelectItem key={opt.value} value={opt.value}>
+                  {opt.label ?? opt.value}
+                </MtSelectItem>
+              ))}
+            </MtSelect>
+          ) : (
+            <MtInput
+              className="flex-1 w-full text-xs"
+              placeholder="Value"
+              value={rule.value ?? ''}
+              onChange={(event) => {
+                const nextRule = { ...rule, value: event.target.value };
+                updateRoot({
+                  ...value,
+                  conjunction: 'AND',
+                  children: [nextRule],
+                });
+              }}
+              variant="ghost"
+            />
+          )
         ) : (
           <span className="text-xs">No value</span>
         )}
@@ -241,6 +274,8 @@ export function MtFilterDropdown({
   const renderRule = (rule: MtFilterRule, path: number[]) => {
     const operator = operatorByValue.get(rule.operator);
     const requiresValue = operator?.requiresValue ?? true;
+    const fieldDef = fieldByValue.get(rule.field);
+    const fieldOptions = fieldDef?.options;
 
     return (
       <div className="flex items-center gap-2 rounded-md border border-border-default bg-surface-subtle px-2 py-1.5">
@@ -251,6 +286,7 @@ export function MtFilterDropdown({
               updateNodeAtPath(value, path, (node) => ({
                 ...(node as MtFilterRule),
                 field: nextValue,
+                value: null,
               })),
             );
           }}
@@ -290,20 +326,44 @@ export function MtFilterDropdown({
         </MtSelect>
 
         {requiresValue ? (
-          <MtInput
-            className="flex-1 w-full text-xs"
-            placeholder="Value"
-            value={rule.value ?? ''}
-            onChange={(event) => {
-              updateRoot(
-                updateNodeAtPath(value, path, (node) => ({
-                  ...(node as MtFilterRule),
-                  value: event.target.value,
-                })),
-              );
-            }}
-            variant="ghost"
-          />
+          fieldOptions && fieldOptions.length > 0 ? (
+            <MtSelect
+              value={rule.value ?? ''}
+              onValueChange={(nextValue) => {
+                updateRoot(
+                  updateNodeAtPath(value, path, (node) => ({
+                    ...(node as MtFilterRule),
+                    value: nextValue,
+                  })),
+                );
+              }}
+              variant="ghost"
+              size="medium"
+              showCaret={false}
+              className="flex-1 text-xs"
+            >
+              {fieldOptions.map((opt) => (
+                <MtSelectItem key={opt.value} value={opt.value}>
+                  {opt.label ?? opt.value}
+                </MtSelectItem>
+              ))}
+            </MtSelect>
+          ) : (
+            <MtInput
+              className="flex-1 w-full text-xs"
+              placeholder="Value"
+              value={rule.value ?? ''}
+              onChange={(event) => {
+                updateRoot(
+                  updateNodeAtPath(value, path, (node) => ({
+                    ...(node as MtFilterRule),
+                    value: event.target.value,
+                  })),
+                );
+              }}
+              variant="ghost"
+            />
+          )
         ) : (
           <span className="text-xs text-text-muted">No value</span>
         )}

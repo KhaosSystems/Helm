@@ -22,8 +22,8 @@ import {
   getUniqueEntryValues,
   isCollectionFilterActive,
   COLLECTION_SORT_FIELDS,
-  COLLECTION_FILTER_FIELDS,
   COLLECTION_FILTER_OPERATORS,
+  buildCollectionFilterFields,
 } from '../MtCollectionEntryUtils';
 import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../MtCollectionEntryUtils';
 import {
@@ -554,6 +554,7 @@ function MtCollectionBoardLayoutSettingsMenu({
   setCurrentView,
 }: MtCollectionLayoutSettingsProps<any>) {
   const groupableProperties = properties.filter((property) => property.groupable);
+  const filterFields = React.useMemo(() => buildCollectionFilterFields(properties), [properties]);
   const propertyOptions = buildBoardPropertyOptions(properties);
   const visiblePropertyIds = ensureRequiredVisibleProperties(
     viewSettings.visiblePropertyIds ?? propertyOptions.map((property) => property.id),
@@ -672,7 +673,7 @@ function MtCollectionBoardLayoutSettingsMenu({
                   },
                 });
               }}
-              fields={COLLECTION_FILTER_FIELDS}
+              fields={filterFields}
               operators={COLLECTION_FILTER_OPERATORS}
               variant="ghost"
             />
@@ -727,6 +728,7 @@ function MtCollectionBoardLayoutToolbarActions() {
   const context = useMtCollection();
   const currentView = context.currentView;
   const properties = context.properties;
+  const filterFields = React.useMemo(() => buildCollectionFilterFields(properties), [properties]);
 
   if (!currentView) {
     return null;
@@ -809,7 +811,7 @@ function MtCollectionBoardLayoutToolbarActions() {
           showCaret={false}
           value={currentFilter}
           onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-          fields={COLLECTION_FILTER_FIELDS}
+          fields={filterFields}
           operators={COLLECTION_FILTER_OPERATORS}
         />
         {hasFilter ? (

@@ -1,5 +1,7 @@
 import type { MtFilterGroup, MtFilterNode, MtFilterRule } from '../../MtFilter';
+import type { MtFilterField } from '../../MtFilter';
 import type { MtSortRule } from '../../MtSort';
+import type { MtCollectionProperty } from './MtCollection';
 
 type MtCollectionLegacyFilterState = {
   query?: string;
@@ -227,7 +229,7 @@ export const COLLECTION_SORT_FIELDS = [
   { value: 'summary', label: 'Summary' },
 ];
 
-export const COLLECTION_FILTER_FIELDS = [
+export const COLLECTION_FILTER_FIELDS: MtFilterField[] = [
   { value: 'summary', label: 'Summary' },
   { value: 'status', label: 'Status' },
   { value: 'priority', label: 'Priority' },
@@ -235,6 +237,45 @@ export const COLLECTION_FILTER_FIELDS = [
   { value: 'assignee', label: 'Assignee' },
   { value: 'id', label: 'ID' },
 ];
+
+/**
+ * Build filter fields enriched with dropdown options from property `discreteValues`.
+ *
+ * The base set of filter fields is always present. When a `properties` schema is
+ * provided, fields whose id matches a property with `discreteValues` will offer
+ * those values as selectable options in the filter value dropdown.
+ *
+ * Property id mapping: `status`/`state` → "status", `type`/`entryType`/`issueType` → "type".
+ */
+export function buildCollectionFilterFields(properties?: MtCollectionProperty[]): MtFilterField[] {
+  if (!properties || properties.length === 0) return COLLECTION_FILTER_FIELDS;
+
+  const resolveDiscreteValues = (...ids: string[]) => {
+    for (const id of ids) {
+      const prop = properties.find((p) => p.id === id);
+      if (prop?.discreteValues && prop.discreteValues.length > 0) {
+        return prop.discreteValues.map((v) =>
+          typeof v === 'string' ? { value: v } : { value: v.value, label: v.label },
+        );
+      }
+    }
+    return undefined;
+  };
+
+  return COLLECTION_FILTER_FIELDS.map((field) => {
+    let options = resolveDiscreteValues(field.value);
+
+    // Handle aliases
+    if (!options && field.value === 'status') {
+      options = resolveDiscreteValues('state');
+    }
+    if (!options && field.value === 'type') {
+      options = resolveDiscreteValues('entryType', 'issueType');
+    }
+
+    return options ? { ...field, options } : field;
+  });
+}
 
 export const COLLECTION_FILTER_OPERATORS = [
   { value: 'is', label: 'is', requiresValue: true },

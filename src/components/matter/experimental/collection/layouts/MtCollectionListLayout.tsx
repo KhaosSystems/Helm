@@ -31,8 +31,8 @@ import {
   getDefaultCollectionFilter,
   isCollectionFilterActive,
   COLLECTION_SORT_FIELDS,
-  COLLECTION_FILTER_FIELDS,
   COLLECTION_FILTER_OPERATORS,
+  buildCollectionFilterFields,
 } from '../MtCollectionEntryUtils';
 import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../MtCollectionEntryUtils';
 import { MtFilterDropdown } from '../../../MtFilter';
@@ -915,6 +915,7 @@ function MtCollectionListLayoutMenu({
   setCurrentView,
 }: MtCollectionLayoutSettingsProps<any>) {
   const filterState = (viewSettings.filter ?? {}) as MtCollectionFilterState;
+  const filterFields = React.useMemo(() => buildCollectionFilterFields(properties), [properties]);
   const propertyOptions = buildListPropertyOptions(properties);
   const visiblePropertyIds = ensureRequiredVisibleProperties(
     viewSettings.visiblePropertyIds ?? propertyOptions.map((property) => property.id),
@@ -993,7 +994,7 @@ function MtCollectionListLayoutMenu({
               title="Filter"
               value={currentFilterValue}
               onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-              fields={COLLECTION_FILTER_FIELDS}
+              fields={filterFields}
               operators={COLLECTION_FILTER_OPERATORS}
               variant="ghost"
             />
@@ -1089,6 +1090,7 @@ function MtCollectionListLayoutToolbarActions() {
   const context = useMtCollection();
   const currentView = context.currentView;
   const properties = context.properties;
+  const filterFields = React.useMemo(() => buildCollectionFilterFields(properties), [properties]);
 
   if (!currentView) {
     return null;
@@ -1178,7 +1180,7 @@ function MtCollectionListLayoutToolbarActions() {
           showCaret={false}
           value={currentFilter}
           onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-          fields={COLLECTION_FILTER_FIELDS}
+          fields={filterFields}
           operators={COLLECTION_FILTER_OPERATORS}
         />
         {hasFilter ? (
