@@ -437,6 +437,7 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
                   subtaskCount={row.subtaskCount}
                   isExpanded={row.isExpanded}
                   onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
+                  onAddSubtask={() => props.onAddSubtask?.(row.entry)}
                   onSummaryChange={(nextSummary) => {
                     applyEntryPatch(row.entry, { summary: nextSummary });
                   }}

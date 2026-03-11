@@ -1,4 +1,5 @@
 import React from 'react';
+import { Plus } from 'lucide-react';
 import MtAvatar from '../../MtAvatar';
 import { MtButton } from '../../MtButton';
 import { MtCheckbox } from '../../MtCheckbox';
@@ -54,6 +55,8 @@ type MtCollectionTaskListEntryProps = {
   isExpanded?: boolean;
   /** Toggle expand/collapse. */
   onToggleExpand?: () => void;
+  /** Add a subtask under this entry. */
+  onAddSubtask?: () => void;
 };
 
 export function MtCollectionTaskListEntry({
@@ -74,6 +77,7 @@ export function MtCollectionTaskListEntry({
   subtaskCount = 0,
   isExpanded = false,
   onToggleExpand,
+  onAddSubtask,
 }: MtCollectionTaskListEntryProps) {
   const displayId = entry?.id ? String(entry.id) : '';
   // Use the Convex _id as canonical id for selection; fall back to id.
@@ -193,16 +197,30 @@ export function MtCollectionTaskListEntry({
         />
       </div>
 
-      {subtasksEnabled && hasSubtasks ? (
-        <MtButton
-          variant="ghost"
-          className="shrink-0 px-1 text-text-muted hover:text-text-primary"
-          onClick={onToggleExpand}
-          aria-label={isExpanded ? 'Collapse subtasks' : 'Expand subtasks'}
-        >
-          <MtSubgraphIcon size={12} />
-          <span className="text-sm">{subtaskCount}</span>
-        </MtButton>
+      {subtasksEnabled ? (
+        <div className="flex items-center gap-1 shrink-0">
+          {hasSubtasks ? (
+            <MtButton
+              variant="ghost"
+              className="shrink-0 px-2 text-text-muted hover:text-text-primary"
+              onClick={onToggleExpand}
+              aria-label={isExpanded ? 'Collapse subtasks' : 'Expand subtasks'}
+            >
+              <MtSubgraphIcon size={12} />
+              <span className="text-sm">{subtaskCount}</span>
+            </MtButton>
+          ) : null}
+
+          <MtButton
+            kind="icon"
+            variant="ghost"
+            className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover:opacity-100"
+            onClick={onAddSubtask}
+            aria-label="Add subtask"
+          >
+            <Plus size={12} />
+          </MtButton>
+        </div>
       ) : null}
 
       {showAssignee ? (
