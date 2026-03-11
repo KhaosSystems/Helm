@@ -14,10 +14,13 @@ import {
   getCollectionEntrySummary,
   getCollectionFilterRuleCount,
   getDefaultCollectionFilter,
+  getUniqueEntryValues,
   isCollectionFilterActive,
 } from '../MtCollectionEntryUtils';
 import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../MtCollectionEntryUtils';
 import {
+  MtCollectionAssigneeDropdown,
+  type MtCollectionAssigneeOption,
   MtCollectionSummaryInput,
   MtIssueTypeSelect,
   MtPrioirtySelect,
@@ -53,29 +56,32 @@ function getDiscreteValueStrings(values: Array<string | MtCollectionDiscreteValu
   return (values ?? []).map((value) => (typeof value === 'string' ? value : value.value));
 }
 
-/** Default card component used when no renderEntry is provided. */
-function DefaultBoardEntry({
+export function MtCollectionBoardCard({
   entry,
   onSummaryChange,
   onPriorityChange,
   onStatusChange,
   onIssueTypeChange,
+  onAssigneeChange,
   visiblePropertySet,
   parentDisplayId,
   statusOptions,
   priorityOptions,
   issueTypeOptions,
+  assigneeOptions,
 }: {
   entry: any;
   onSummaryChange: (nextSummary: string) => void;
   onPriorityChange: (nextPriority: string) => void;
   onStatusChange: (nextStatus: string) => void;
   onIssueTypeChange: (nextType: string) => void;
+  onAssigneeChange?: (nextAssignee?: string) => void;
   visiblePropertySet: Set<string>;
   parentDisplayId?: string;
   statusOptions?: string[];
   priorityOptions?: string[];
   issueTypeOptions?: Array<string | MtCollectionDiscreteValueOption>;
+  assigneeOptions?: MtCollectionAssigneeOption[];
 }) {
   const displayId = getCollectionEntryId(entry);
   const priority = getCollectionEntryPriority(entry);
@@ -119,7 +125,17 @@ function DefaultBoardEntry({
             {showPriority ? (
               <MtPrioirtySelect value={priority} options={priorityOptions} onChange={onPriorityChange} />
             ) : null}
-            {showAssignee ? <MtAvatar name={String(assignee ?? '')} size="xs" /> : null}
+            {showAssignee ? (
+              assigneeOptions && assigneeOptions.length > 0 ? (
+                <MtCollectionAssigneeDropdown
+                  assignee={typeof assignee === 'string' ? assignee : undefined}
+                  options={assigneeOptions}
+                  onChange={onAssigneeChange ?? (() => undefined)}
+                />
+              ) : (
+                <MtAvatar name={String(assignee ?? '')} size="xs" />
+              )
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -217,6 +233,17 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
     setEntryState(props.entries);
   }, [props.entries]);
 
+  const assigneeOptions = React.useMemo<MtCollectionAssigneeOption[]>(() => {
+    if (props.assigneeOptions && props.assigneeOptions.length > 0) {
+      return props.assigneeOptions;
+    }
+
+    return getUniqueEntryValues(entryState, 'assignee').map((value) => ({
+      value,
+      label: value,
+    }));
+  }, [entryState, props.assigneeOptions]);
+
   const effectiveGroupBy = props.groupBy ?? 'status';
   const sortBy = typeof props.viewSettings?.sortBy === 'string' ? props.viewSettings.sortBy : 'updated';
   const quickFilters = React.useMemo(
@@ -251,6 +278,16 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
       ),
     );
   };
+
+  const applyEntryPatch = React.useCallback(
+    (entry: any, patch: Record<string, unknown>) => {
+      updateEntry(String(entry?.id ?? ''), patch);
+      if (props.onUpdateEntry) {
+        void props.onUpdateEntry(entry, patch as any);
+      }
+    },
+    [props.onUpdateEntry],
+  );
 
   return (
     <div className="h-full min-h-0 overflow-auto p-3">
@@ -297,6 +334,15 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                 );
               });
 
+              if (props.onUpdateEntry && effectiveGroupBy) {
+                const movedEntry = entryState.find((entry) => String(entry?.id) === movedId);
+                if (movedEntry) {
+                  void props.onUpdateEntry(movedEntry, {
+                    [effectiveGroupBy]: column.label === 'Ungrouped' ? null : column.label,
+                  } as any);
+                }
+              }
+
               setDragOverColumnKey(null);
               setDraggingId(null);
             }}
@@ -327,12 +373,13 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                   {EntryComponent ? (
                     <EntryComponent entry={entry} />
                   ) : (
-                    <DefaultBoardEntry
+                    <MtCollectionBoardCard
                       entry={entry}
                       visiblePropertySet={visiblePropertySet}
                       statusOptions={statusOptions}
                       priorityOptions={priorityOptions}
                       issueTypeOptions={issueTypeOptions}
+                      assigneeOptions={assigneeOptions}
                       parentDisplayId={
                         entry?.parentId
                           ? String(
@@ -343,20 +390,23 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                           : undefined
                       }
                       onSummaryChange={(nextSummary) => {
-                        updateEntry(String(entry?.id), { summary: nextSummary });
+                        applyEntryPatch(entry, { summary: nextSummary });
                       }}
                       onPriorityChange={(nextPriority) => {
-                        updateEntry(String(entry?.id), { priority: nextPriority });
+                        applyEntryPatch(entry, { priority: nextPriority });
                       }}
                       onStatusChange={(nextStatus) => {
-                        updateEntry(String(entry?.id), { status: nextStatus });
+                        applyEntryPatch(entry, { status: nextStatus, state: nextStatus });
                       }}
                       onIssueTypeChange={(nextType) => {
-                        updateEntry(String(entry?.id), {
+                        applyEntryPatch(entry, {
                           entryType: nextType,
                           type: nextType,
                           issueType: nextType,
                         });
+                      }}
+                      onAssigneeChange={(nextAssignee) => {
+                        applyEntryPatch(entry, { assignee: nextAssignee });
                       }}
                     />
                   )}

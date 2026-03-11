@@ -8,6 +8,21 @@ import {
   type MtCollectionQuickFilterState,
 } from '../MtCollectionEntryUtils';
 import type { MtSortRule } from '../../../MtSort';
+import { MtCollectionBoardCard } from './MtCollectionBoardLayout';
+import {
+  getUniqueEntryValues,
+} from '../MtCollectionEntryUtils';
+import type { MtCollectionAssigneeOption } from '../MtCollectionEntryControls';
+
+const REQUIRED_VISIBLE_PROPERTY_IDS = ['summary'];
+
+function ensureRequiredVisibleProperties(propertyIds: string[]) {
+  return Array.from(new Set([...propertyIds, ...REQUIRED_VISIBLE_PROPERTY_IDS]));
+}
+
+function getDiscreteValueStrings(values: Array<string | { value: string }> | undefined) {
+  return (values ?? []).map((value) => (typeof value === 'string' ? value : value.value));
+}
 
 type PlanColumn = {
   key: string;
@@ -61,6 +76,47 @@ function getEntryTimeEstimate(entry: any) {
 export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
   const [entryState, setEntryState] = React.useState(props.entries);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  const properties = React.useMemo(
+    () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
+    [props.properties],
+  );
+  const statusOptions = React.useMemo(
+    () =>
+      getDiscreteValueStrings(
+        properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+      ),
+    [properties],
+  );
+  const priorityOptions = React.useMemo(
+    () => getDiscreteValueStrings(properties.find((property) => property.id === 'priority')?.discreteValues),
+    [properties],
+  );
+  const issueTypeOptions = React.useMemo(
+    () => properties.find((property) => ['type', 'entryType', 'issueType'].includes(property.id))?.discreteValues,
+    [properties],
+  );
+  const visiblePropertyIds = React.useMemo(
+    () =>
+      ensureRequiredVisibleProperties(
+        props.viewSettings?.visiblePropertyIds ?? properties.map((property) => property.id),
+      ),
+    [props.viewSettings?.visiblePropertyIds, properties],
+  );
+  const visiblePropertySet = React.useMemo(() => new Set(visiblePropertyIds), [visiblePropertyIds]);
+  const assigneeOptions = React.useMemo<MtCollectionAssigneeOption[]>(() => {
+    if (props.assigneeOptions && props.assigneeOptions.length > 0) {
+      return props.assigneeOptions;
+    }
+
+    return getUniqueEntryValues(entryState, 'assignee').map((value) => ({
+      value,
+      label: value,
+    }));
+  }, [entryState, props.assigneeOptions]);
+  const entryByConvexId = React.useMemo(
+    () => new Map(entryState.map((entry: any) => [String(entry._id ?? ''), entry])),
+    [entryState],
+  );
   const sortBy = typeof props.viewSettings?.sortBy === 'string' ? props.viewSettings.sortBy : 'updated';
   const sortRules = React.useMemo(
     () => (props.viewSettings?.sortRules as MtSortRule[] | undefined) ?? [],
@@ -106,7 +162,7 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
       };
     });
 
-    return [{ key: 'week-unscheduled', label: 'No start date' }, ...weekColumns];
+    return [{ key: 'week-unscheduled', label: 'Not planned / overdue' }, ...weekColumns];
   }, []);
 
   const entriesByColumn = React.useMemo(() => {
@@ -154,6 +210,16 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
     [],
   );
 
+  const applyEntryPatch = React.useCallback(
+    (entry: any, patch: Record<string, unknown>) => {
+      updateEntry(String(entry?.id ?? ''), patch);
+      if (props.onUpdateEntry) {
+        void props.onUpdateEntry(entry, patch as any);
+      }
+    },
+    [props.onUpdateEntry, updateEntry],
+  );
+
   return (
     <div className="h-full min-h-0 overflow-auto p-3">
       <div className="flex min-w-max gap-3">
@@ -193,10 +259,7 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
                         dueDate: undefined,
                       };
 
-                updateEntry(movedId, patch);
-                if (props.onUpdateEntry) {
-                  void props.onUpdateEntry(movedEntry, patch as any);
-                }
+                applyEntryPatch(movedEntry, patch);
                 setDraggingId(null);
               }}
             >
@@ -208,8 +271,6 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
               <div className="flex max-h-[calc(100vh-16rem)] flex-col gap-2 overflow-auto p-2">
                 {columnEntries.map((entry) => {
                   const entryId = String(entry?.id ?? '');
-                  const summary = String(entry?.summary ?? 'Untitled');
-
                   return (
                     <div
                       key={entryId}
@@ -220,10 +281,44 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
                         setDraggingId(entryId);
                       }}
                       onDragEnd={() => setDraggingId(null)}
-                      className="cursor-grab rounded border border-[#2A2A2A] bg-[#141414] p-2 active:cursor-grabbing"
+                      className="cursor-grab active:cursor-grabbing"
                     >
-                      <div className="text-xs text-text-muted">{entryId}</div>
-                      <div className="truncate text-sm text-text-primary">{summary}</div>
+                      <MtCollectionBoardCard
+                        entry={entry}
+                        visiblePropertySet={visiblePropertySet}
+                        statusOptions={statusOptions}
+                        priorityOptions={priorityOptions}
+                        issueTypeOptions={issueTypeOptions}
+                        assigneeOptions={assigneeOptions}
+                        parentDisplayId={
+                          entry?.parentId
+                            ? String(
+                                entryByConvexId.get(String(entry.parentId))?.id ??
+                                  entryByConvexId.get(String(entry.parentId))?._id ??
+                                  entry.parentId,
+                              )
+                            : undefined
+                        }
+                        onSummaryChange={(nextSummary) => {
+                          applyEntryPatch(entry, { summary: nextSummary });
+                        }}
+                        onPriorityChange={(nextPriority) => {
+                          applyEntryPatch(entry, { priority: nextPriority });
+                        }}
+                        onStatusChange={(nextStatus) => {
+                          applyEntryPatch(entry, { status: nextStatus, state: nextStatus });
+                        }}
+                        onIssueTypeChange={(nextType) => {
+                          applyEntryPatch(entry, {
+                            entryType: nextType,
+                            type: nextType,
+                            issueType: nextType,
+                          });
+                        }}
+                        onAssigneeChange={(nextAssignee) => {
+                          applyEntryPatch(entry, { assignee: nextAssignee });
+                        }}
+                      />
                     </div>
                   );
                 })}
