@@ -30,6 +30,9 @@ import {
   getCollectionFilterRuleCount,
   getDefaultCollectionFilter,
   isCollectionFilterActive,
+  COLLECTION_SORT_FIELDS,
+  COLLECTION_FILTER_FIELDS,
+  COLLECTION_FILTER_OPERATORS,
 } from '../MtCollectionEntryUtils';
 import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../MtCollectionEntryUtils';
 import { MtFilterDropdown } from '../../../MtFilter';
@@ -924,34 +927,13 @@ function MtCollectionListLayoutMenu({
     : 'None';
 
   const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
-  const sortFields = [
-    { value: 'updated', label: 'Updated' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'status', label: 'Status' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'summary', label: 'Summary' },
-  ];
   const selectedSortLabel =
     sortRules.length > 0
-      ? (sortFields.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
+      ? (COLLECTION_SORT_FIELDS.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
       : 'None';
 
   const activeFilterCount = getCollectionFilterRuleCount(filterState);
 
-  const filterFields = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'id', label: 'ID' },
-  ];
-  const filterOperators = [
-    { value: 'is', label: 'is', requiresValue: true },
-    { value: 'is_not', label: 'is not', requiresValue: true },
-    { value: 'contains', label: 'contains', requiresValue: true },
-    { value: 'is_empty', label: 'is empty', requiresValue: false },
-    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
-  ];
   const currentFilterValue =
     'type' in filterState && filterState.type === 'group' ? filterState : getDefaultCollectionFilter();
 
@@ -1011,8 +993,8 @@ function MtCollectionListLayoutMenu({
               title="Filter"
               value={currentFilterValue}
               onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-              fields={filterFields}
-              operators={filterOperators}
+              fields={COLLECTION_FILTER_FIELDS}
+              operators={COLLECTION_FILTER_OPERATORS}
               variant="ghost"
             />
           </div>
@@ -1091,7 +1073,7 @@ function MtCollectionListLayoutMenu({
               title="Sort"
               value={sortRules}
               onChange={(nextSortRules) => setViewSettings({ sortRules: nextSortRules })}
-              fields={sortFields}
+              fields={COLLECTION_SORT_FIELDS}
               variant="ghost"
             />
           </div>
@@ -1131,30 +1113,6 @@ function MtCollectionListLayoutToolbarActions() {
       },
     });
   };
-
-  const filterFields = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'id', label: 'ID' },
-  ];
-
-  const filterOperators = [
-    { value: 'is', label: 'is', requiresValue: true },
-    { value: 'is_not', label: 'is not', requiresValue: true },
-    { value: 'contains', label: 'contains', requiresValue: true },
-    { value: 'is_empty', label: 'is empty', requiresValue: false },
-    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
-  ];
-
-  const sortFields = [
-    { value: 'updated', label: 'Updated' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'status', label: 'Status' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'summary', label: 'Summary' },
-  ];
 
   const currentFilter =
     viewSettings.filter &&
@@ -1203,7 +1161,7 @@ function MtCollectionListLayoutToolbarActions() {
           showCaret={false}
           value={sortRules}
           onChange={(nextSortRules) => setViewSettings({ sortRules: nextSortRules })}
-          fields={sortFields}
+          fields={COLLECTION_SORT_FIELDS}
         />
         {hasSort ? (
           <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ sortRules: [] })}>
@@ -1220,8 +1178,8 @@ function MtCollectionListLayoutToolbarActions() {
           showCaret={false}
           value={currentFilter}
           onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-          fields={filterFields}
-          operators={filterOperators}
+          fields={COLLECTION_FILTER_FIELDS}
+          operators={COLLECTION_FILTER_OPERATORS}
         />
         {hasFilter ? (
           <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ filter: undefined })}>

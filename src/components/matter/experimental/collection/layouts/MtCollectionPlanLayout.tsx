@@ -1,7 +1,6 @@
 import React from 'react';
 import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
-import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core';
 import { ArrowUpDown, ChevronRight, ListFilter, X } from 'lucide-react';
 import {
   applyCollectionFilters,
@@ -11,11 +10,14 @@ import {
   getDefaultCollectionFilter,
   getUniqueEntryValues,
   isCollectionFilterActive,
+  COLLECTION_SORT_FIELDS,
+  COLLECTION_FILTER_FIELDS,
+  COLLECTION_FILTER_OPERATORS,
   type MtCollectionFilterState,
   type MtCollectionQuickFilterState,
 } from '../MtCollectionEntryUtils';
 import type { MtSortRule } from '../../../MtSort';
-import { MtCollectionBoardCard, SortableBoardCard } from './MtCollectionBoardLayout';
+import { MtCollectionBoardCard, SortableBoardCard, DroppableColumn } from './MtCollectionBoardLayout';
 import { useBoardDnd } from './useBoardDnd';
 import { useMtToast } from '../../../MtToast';
 import type { MtCollectionAssigneeOption } from '../MtCollectionEntryControls';
@@ -41,37 +43,6 @@ type PlanColumn = {
   weekStartMs?: number;
   weekEndMs?: number;
 };
-
-function PlanDroppableColumn({
-  column,
-  entryIds,
-  totalEstimate,
-  children,
-}: {
-  column: PlanColumn;
-  entryIds: string[];
-  totalEstimate: number;
-  children: React.ReactNode;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ minHeight: `${Math.max(180, 52 + entryIds.length * 56)}px` }}
-      className={`w-72 shrink-0 rounded border bg-[#111111] transition-all duration-150 ease-out ${isOver ? 'border-border-default scale-[1.01]' : 'border-[#2A2A2A] scale-100'}`}
-    >
-      <div className="flex items-center justify-between border-b border-[#2A2A2A] px-3 py-2">
-        <div className="text-sm text-text-primary">{column.label}</div>
-        <div className="text-xs text-text-muted">{totalEstimate}</div>
-      </div>
-
-      <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>
-        <div className="flex max-h-[calc(100vh-16rem)] flex-col gap-2 overflow-auto p-2">{children}</div>
-      </SortableContext>
-    </div>
-  );
-}
 
 function startOfIsoWeek(input: Date) {
   const date = new Date(input);
@@ -301,13 +272,13 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
         onDragEnd={onDragEnd}
         autoScroll
       >
-        <div className="h-full min-h-0 overflow-auto p-3">
-          <div className="flex min-w-max gap-3">
+        <div className="h-full min-h-0 overflow-x-auto p-3">
+          <div className="flex h-full min-w-max gap-3">
             {orderedColumns.map(({ column, entryIds }) => {
               const totalEstimate = entryIds.reduce((sum, id) => sum + getEntryTimeEstimate(entryById.get(id)), 0);
 
               return (
-                <PlanDroppableColumn key={column.key} column={column} entryIds={entryIds} totalEstimate={totalEstimate}>
+                <DroppableColumn key={column.key} columnKey={column.key} label={column.label} trailing={totalEstimate} entryIds={entryIds}>
                   {entryIds.map((entryId) => {
                     const entry = entryById.get(entryId);
                     if (!entry) {
@@ -356,7 +327,7 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
                       </SortableBoardCard>
                     );
                   })}
-                </PlanDroppableColumn>
+                </DroppableColumn>
               );
             })}
           </div>
@@ -408,33 +379,12 @@ function MtCollectionPlanLayoutSettingsMenu({
   const filterState = (viewSettings.filter ?? {}) as MtCollectionFilterState;
   const activeFilterCount = getCollectionFilterRuleCount(filterState);
   const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
-  const sortFields = [
-    { value: 'updated', label: 'Updated' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'status', label: 'Status' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'summary', label: 'Summary' },
-  ];
 
   const selectedSortLabel =
     sortRules.length > 0
-      ? (sortFields.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
+      ? (COLLECTION_SORT_FIELDS.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
       : 'None';
 
-  const filterFields = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'id', label: 'ID' },
-  ];
-  const filterOperators = [
-    { value: 'is', label: 'is', requiresValue: true },
-    { value: 'is_not', label: 'is not', requiresValue: true },
-    { value: 'contains', label: 'contains', requiresValue: true },
-    { value: 'is_empty', label: 'is empty', requiresValue: false },
-    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
-  ];
   const currentFilterValue =
     'type' in filterState && filterState.type === 'group' ? filterState : getDefaultCollectionFilter();
 
@@ -480,8 +430,8 @@ function MtCollectionPlanLayoutSettingsMenu({
                   },
                 });
               }}
-              fields={filterFields}
-              operators={filterOperators}
+              fields={COLLECTION_FILTER_FIELDS}
+              operators={COLLECTION_FILTER_OPERATORS}
               variant="ghost"
             />
           </div>
@@ -497,7 +447,7 @@ function MtCollectionPlanLayoutSettingsMenu({
               onChange={(nextSortRules) => {
                 setViewSettings({ sortRules: nextSortRules });
               }}
-              fields={sortFields}
+              fields={COLLECTION_SORT_FIELDS}
               variant="ghost"
             />
           </div>
@@ -519,27 +469,6 @@ function MtCollectionPlanLayoutToolbarActions() {
 
   const viewSettings = currentView.settings ?? {};
   const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
-  const filterFields = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'id', label: 'ID' },
-  ];
-  const filterOperators = [
-    { value: 'is', label: 'is', requiresValue: true },
-    { value: 'is_not', label: 'is not', requiresValue: true },
-    { value: 'contains', label: 'contains', requiresValue: true },
-    { value: 'is_empty', label: 'is empty', requiresValue: false },
-    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
-  ];
-  const sortFields = [
-    { value: 'updated', label: 'Updated' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'status', label: 'Status' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'summary', label: 'Summary' },
-  ];
   const currentFilter =
     viewSettings.filter &&
     typeof viewSettings.filter === 'object' &&
@@ -570,7 +499,7 @@ function MtCollectionPlanLayoutToolbarActions() {
           showCaret={false}
           value={sortRules}
           onChange={(nextSortRules) => setViewSettings({ sortRules: nextSortRules })}
-          fields={sortFields}
+          fields={COLLECTION_SORT_FIELDS}
         />
         {hasSort ? (
           <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ sortRules: [] })}>
@@ -587,8 +516,8 @@ function MtCollectionPlanLayoutToolbarActions() {
           showCaret={false}
           value={currentFilter}
           onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-          fields={filterFields}
-          operators={filterOperators}
+          fields={COLLECTION_FILTER_FIELDS}
+          operators={COLLECTION_FILTER_OPERATORS}
         />
         {hasFilter ? (
           <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ filter: undefined })}>

@@ -21,6 +21,9 @@ import {
   getDefaultCollectionFilter,
   getUniqueEntryValues,
   isCollectionFilterActive,
+  COLLECTION_SORT_FIELDS,
+  COLLECTION_FILTER_FIELDS,
+  COLLECTION_FILTER_OPERATORS,
 } from '../MtCollectionEntryUtils';
 import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../MtCollectionEntryUtils';
 import {
@@ -251,31 +254,34 @@ export function SortableBoardCard({ id, children }: { id: string; children: Reac
   );
 }
 
-export function BoardDroppableColumn({
-  column,
+export function DroppableColumn({
+  columnKey,
+  label,
+  trailing,
   entryIds,
   children,
 }: {
-  column: BoardColumn;
+  columnKey: string;
+  label: string;
+  trailing?: React.ReactNode;
   entryIds: string[];
   children: React.ReactNode;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
+  const { setNodeRef, isOver } = useDroppable({ id: `column:${columnKey}` });
 
   return (
     <div
       ref={setNodeRef}
-      className={`w-72 min-w-72 rounded border bg-[#111111] transition-[border-color] duration-200 ease-out ${isOver ? 'border-border-default' : 'border-[#2A2A2A]'}`}
+      className={`w-72 min-w-72 flex flex-col rounded border bg-[#111111] transition-[border-color] duration-200 ease-out ${isOver ? 'border-border-default' : 'border-[#2A2A2A]'}`}
     >
-      <div className="flex items-center justify-between border-b border-border-default px-3 py-2 text-sm">
-        <span className="text-text-primary">{column.label}</span>
-        <span className="text-text-muted">{entryIds.length}</span>
+      <div className="flex shrink-0 items-center justify-between border-b border-border-default px-3 py-2 text-sm">
+        <span className="text-text-primary">{label}</span>
+        <span className="text-text-muted">{trailing ?? entryIds.length}</span>
       </div>
 
       <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>
         <div
-          className="flex flex-col gap-2 p-2"
-          style={{ minHeight: `${Math.max(128, entryIds.length * 56)}px`, transition: 'min-height 200ms ease-out' }}
+          className="flex flex-1 flex-col gap-2 overflow-y-auto p-2"
         >
           {children}
         </div>
@@ -283,6 +289,9 @@ export function BoardDroppableColumn({
     </div>
   );
 }
+
+/** @deprecated Use DroppableColumn instead */
+export const BoardDroppableColumn = DroppableColumn;
 
 export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
   const EntryComponent = props.renderEntry;
@@ -439,10 +448,10 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
         onDragEnd={onDragEnd}
         autoScroll
       >
-        <div className="h-full min-h-0 overflow-auto p-3">
-          <div className="flex min-w-max gap-3">
+        <div className="h-full min-h-0 overflow-x-auto p-3">
+          <div className="flex h-full min-w-max gap-3">
             {orderedColumns.map(({ column, entryIds }) => (
-              <BoardDroppableColumn key={column.key} column={column} entryIds={entryIds}>
+              <DroppableColumn key={column.key} columnKey={column.key} label={column.label} entryIds={entryIds}>
                 {entryIds.map((entryId) => {
                   const entry = entryById.get(entryId);
                   if (!entry) {
@@ -495,7 +504,7 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                     </SortableBoardCard>
                   );
                 })}
-              </BoardDroppableColumn>
+              </DroppableColumn>
             ))}
           </div>
         </div>
@@ -557,33 +566,12 @@ function MtCollectionBoardLayoutSettingsMenu({
   const filterState = (viewSettings.filter ?? {}) as MtCollectionFilterState;
   const activeFilterCount = getCollectionFilterRuleCount(filterState);
   const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
-  const sortFields = [
-    { value: 'updated', label: 'Updated' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'status', label: 'Status' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'summary', label: 'Summary' },
-  ];
 
   const selectedSortLabel =
     sortRules.length > 0
-      ? (sortFields.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
+      ? (COLLECTION_SORT_FIELDS.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
       : 'None';
 
-  const filterFields = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'id', label: 'ID' },
-  ];
-  const filterOperators = [
-    { value: 'is', label: 'is', requiresValue: true },
-    { value: 'is_not', label: 'is not', requiresValue: true },
-    { value: 'contains', label: 'contains', requiresValue: true },
-    { value: 'is_empty', label: 'is empty', requiresValue: false },
-    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
-  ];
   const currentFilterValue =
     'type' in filterState && filterState.type === 'group' ? filterState : getDefaultCollectionFilter();
 
@@ -684,8 +672,8 @@ function MtCollectionBoardLayoutSettingsMenu({
                   },
                 });
               }}
-              fields={filterFields}
-              operators={filterOperators}
+              fields={COLLECTION_FILTER_FIELDS}
+              operators={COLLECTION_FILTER_OPERATORS}
               variant="ghost"
             />
           </div>
@@ -723,7 +711,7 @@ function MtCollectionBoardLayoutSettingsMenu({
               onChange={(nextSortRules) => {
                 setViewSettings({ sortRules: nextSortRules });
               }}
-              fields={sortFields}
+              fields={COLLECTION_SORT_FIELDS}
               variant="ghost"
             />
           </div>
@@ -747,27 +735,6 @@ function MtCollectionBoardLayoutToolbarActions() {
   const viewSettings = currentView.settings ?? {};
   const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
   const groupableProperties = properties.filter((property) => property.groupable);
-  const filterFields = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'id', label: 'ID' },
-  ];
-  const filterOperators = [
-    { value: 'is', label: 'is', requiresValue: true },
-    { value: 'is_not', label: 'is not', requiresValue: true },
-    { value: 'contains', label: 'contains', requiresValue: true },
-    { value: 'is_empty', label: 'is empty', requiresValue: false },
-    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
-  ];
-  const sortFields = [
-    { value: 'updated', label: 'Updated' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'status', label: 'Status' },
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'summary', label: 'Summary' },
-  ];
   const currentFilter =
     viewSettings.filter &&
     typeof viewSettings.filter === 'object' &&
@@ -825,7 +792,7 @@ function MtCollectionBoardLayoutToolbarActions() {
           showCaret={false}
           value={sortRules}
           onChange={(nextSortRules) => setViewSettings({ sortRules: nextSortRules })}
-          fields={sortFields}
+          fields={COLLECTION_SORT_FIELDS}
         />
         {hasSort ? (
           <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ sortRules: [] })}>
@@ -842,8 +809,8 @@ function MtCollectionBoardLayoutToolbarActions() {
           showCaret={false}
           value={currentFilter}
           onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
-          fields={filterFields}
-          operators={filterOperators}
+          fields={COLLECTION_FILTER_FIELDS}
+          operators={COLLECTION_FILTER_OPERATORS}
         />
         {hasFilter ? (
           <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ filter: undefined })}>

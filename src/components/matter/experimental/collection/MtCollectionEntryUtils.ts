@@ -58,6 +58,10 @@ export function getCollectionEntryAssignee(entry: any) {
   return '';
 }
 
+export function getCollectionEntryType(entry: any) {
+  return String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? '');
+}
+
 export function toggleCollectionFilterValue(values: string[] | undefined, value: string) {
   const currentValues = values ?? [];
   return currentValues.includes(value)
@@ -138,6 +142,7 @@ export function applyCollectionFilters(entries: any[], filterState: MtCollection
 function getEntryFieldValue(entry: any, field: string) {
   if (field === 'id') return getCollectionEntryId(entry);
   if (field === 'summary') return getCollectionEntrySummary(entry);
+  if (field === 'type' || field === 'entryType' || field === 'issueType') return getCollectionEntryType(entry);
   const value = entry?.[field as keyof typeof entry];
   if (value === null || value === undefined) return undefined;
   return String(value);
@@ -213,6 +218,32 @@ export function getCollectionFilterRuleCount(filterState: MtCollectionFilterStat
   return countRules(filterState);
 }
 
+export const COLLECTION_SORT_FIELDS = [
+  { value: 'updated', label: 'Updated' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'status', label: 'Status' },
+  { value: 'type', label: 'Type' },
+  { value: 'assignee', label: 'Assignee' },
+  { value: 'summary', label: 'Summary' },
+];
+
+export const COLLECTION_FILTER_FIELDS = [
+  { value: 'summary', label: 'Summary' },
+  { value: 'status', label: 'Status' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'type', label: 'Type' },
+  { value: 'assignee', label: 'Assignee' },
+  { value: 'id', label: 'ID' },
+];
+
+export const COLLECTION_FILTER_OPERATORS = [
+  { value: 'is', label: 'is', requiresValue: true },
+  { value: 'is_not', label: 'is not', requiresValue: true },
+  { value: 'contains', label: 'contains', requiresValue: true },
+  { value: 'is_empty', label: 'is empty', requiresValue: false },
+  { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
+];
+
 export function isCollectionFilterActive(filterState: MtCollectionFilterState | undefined) {
   if (!filterState) {
     return false;
@@ -248,6 +279,12 @@ export function applyCollectionSort(entries: any[], sortRules: MtSortRule[] | un
   const priorityRank: Record<string, number> = { high: 3, medium: 2, low: 1 };
   const statusRank: Record<string, number> = { backlog: 1, open: 2, 'in progress': 3, done: 4 };
 
+  const resolveFieldValue = (entry: any, field: string) => {
+    if (field === 'updated') return entry?.updatedAt ?? entry?.updated ?? entry?.id;
+    if (field === 'type' || field === 'entryType' || field === 'issueType') return getCollectionEntryType(entry);
+    return entry?.[field as keyof typeof entry];
+  };
+
   const compareByField = (left: any, right: any, field: string) => {
     if (field === 'priority') {
       const leftValue = priorityRank[String(left?.priority ?? '').toLowerCase()] ?? 0;
@@ -261,10 +298,8 @@ export function applyCollectionSort(entries: any[], sortRules: MtSortRule[] | un
       return rightValue - leftValue;
     }
 
-    const leftValue =
-      field === 'updated' ? (left?.updatedAt ?? left?.updated ?? left?.id) : left?.[field as keyof typeof left];
-    const rightValue =
-      field === 'updated' ? (right?.updatedAt ?? right?.updated ?? right?.id) : right?.[field as keyof typeof right];
+    const leftValue = resolveFieldValue(left, field);
+    const rightValue = resolveFieldValue(right, field);
 
     const leftNumber = Number(leftValue);
     const rightNumber = Number(rightValue);
