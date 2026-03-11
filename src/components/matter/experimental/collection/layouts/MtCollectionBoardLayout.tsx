@@ -1,10 +1,5 @@
 import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  useDroppable,
-} from '@dnd-kit/core';
+import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useBoardDnd } from './useBoardDnd';
@@ -278,7 +273,12 @@ export function BoardDroppableColumn({
       </div>
 
       <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-2 p-2" style={{ minHeight: `${Math.max(128, entryIds.length * 56)}px`, transition: 'min-height 200ms ease-out' }}>{children}</div>
+        <div
+          className="flex flex-col gap-2 p-2"
+          style={{ minHeight: `${Math.max(128, entryIds.length * 56)}px`, transition: 'min-height 200ms ease-out' }}
+        >
+          {children}
+        </div>
       </SortableContext>
     </div>
   );
@@ -430,109 +430,109 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
 
   return (
     <>
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragCancel={onDragCancel}
-      onDragEnd={onDragEnd}
-      autoScroll
-    >
-      <div className="h-full min-h-0 overflow-auto p-3">
-        <div className="flex min-w-max gap-3">
-          {orderedColumns.map(({ column, entryIds }) => (
-            <BoardDroppableColumn key={column.key} column={column} entryIds={entryIds}>
-              {entryIds.map((entryId) => {
-                const entry = entryById.get(entryId);
-                if (!entry) {
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragCancel={onDragCancel}
+        onDragEnd={onDragEnd}
+        autoScroll
+      >
+        <div className="h-full min-h-0 overflow-auto p-3">
+          <div className="flex min-w-max gap-3">
+            {orderedColumns.map(({ column, entryIds }) => (
+              <BoardDroppableColumn key={column.key} column={column} entryIds={entryIds}>
+                {entryIds.map((entryId) => {
+                  const entry = entryById.get(entryId);
+                  if (!entry) {
+                    return null;
+                  }
+
+                  return (
+                    <SortableBoardCard key={entryId} id={entryId}>
+                      {EntryComponent ? (
+                        <EntryComponent entry={entry} />
+                      ) : (
+                        <MtCollectionBoardCard
+                          entry={entry}
+                          isDragPreview={false}
+                          visiblePropertySet={visiblePropertySet}
+                          statusOptions={statusOptions}
+                          priorityOptions={priorityOptions}
+                          issueTypeOptions={issueTypeOptions}
+                          assigneeOptions={assigneeOptions}
+                          parentDisplayId={
+                            entry?.parentId
+                              ? String(
+                                  entryByConvexId.get(String(entry.parentId))?.id ??
+                                    entryByConvexId.get(String(entry.parentId))?._id ??
+                                    entry.parentId,
+                                )
+                              : undefined
+                          }
+                          onSummaryChange={(nextSummary) => {
+                            applyEntryPatch(entry, { summary: nextSummary });
+                          }}
+                          onPriorityChange={(nextPriority) => {
+                            applyEntryPatch(entry, { priority: nextPriority });
+                          }}
+                          onStatusChange={(nextStatus) => {
+                            applyEntryPatch(entry, { status: nextStatus, state: nextStatus });
+                          }}
+                          onIssueTypeChange={(nextType) => {
+                            applyEntryPatch(entry, {
+                              entryType: nextType,
+                              type: nextType,
+                              issueType: nextType,
+                            });
+                          }}
+                          onAssigneeChange={(nextAssignee) => {
+                            applyEntryPatch(entry, { assignee: nextAssignee });
+                          }}
+                        />
+                      )}
+                    </SortableBoardCard>
+                  );
+                })}
+              </BoardDroppableColumn>
+            ))}
+          </div>
+        </div>
+        <DragOverlay>
+          {activeDragId ? (
+            <div className="w-72 opacity-95 pointer-events-none shadow-lg">
+              {(() => {
+                const activeEntry = entryById.get(activeDragId);
+                if (!activeEntry) {
                   return null;
                 }
 
                 return (
-                  <SortableBoardCard key={entryId} id={entryId}>
-                    {EntryComponent ? (
-                      <EntryComponent entry={entry} />
-                    ) : (
-                      <MtCollectionBoardCard
-                        entry={entry}
-                        isDragPreview={false}
-                        visiblePropertySet={visiblePropertySet}
-                        statusOptions={statusOptions}
-                        priorityOptions={priorityOptions}
-                        issueTypeOptions={issueTypeOptions}
-                        assigneeOptions={assigneeOptions}
-                        parentDisplayId={
-                          entry?.parentId
-                            ? String(
-                                entryByConvexId.get(String(entry.parentId))?.id ??
-                                  entryByConvexId.get(String(entry.parentId))?._id ??
-                                  entry.parentId,
-                              )
-                            : undefined
-                        }
-                        onSummaryChange={(nextSummary) => {
-                          applyEntryPatch(entry, { summary: nextSummary });
-                        }}
-                        onPriorityChange={(nextPriority) => {
-                          applyEntryPatch(entry, { priority: nextPriority });
-                        }}
-                        onStatusChange={(nextStatus) => {
-                          applyEntryPatch(entry, { status: nextStatus, state: nextStatus });
-                        }}
-                        onIssueTypeChange={(nextType) => {
-                          applyEntryPatch(entry, {
-                            entryType: nextType,
-                            type: nextType,
-                            issueType: nextType,
-                          });
-                        }}
-                        onAssigneeChange={(nextAssignee) => {
-                          applyEntryPatch(entry, { assignee: nextAssignee });
-                        }}
-                      />
-                    )}
-                  </SortableBoardCard>
+                  <MtCollectionBoardCard
+                    entry={activeEntry}
+                    isDragPreview={false}
+                    visiblePropertySet={visiblePropertySet}
+                    statusOptions={statusOptions}
+                    priorityOptions={priorityOptions}
+                    issueTypeOptions={issueTypeOptions}
+                    assigneeOptions={assigneeOptions}
+                    parentDisplayId={
+                      activeEntry?.parentId
+                        ? String(
+                            entryByConvexId.get(String(activeEntry.parentId))?.id ??
+                              entryByConvexId.get(String(activeEntry.parentId))?._id ??
+                              activeEntry.parentId,
+                          )
+                        : undefined
+                    }
+                  />
                 );
-              })}
-            </BoardDroppableColumn>
-          ))}
-        </div>
-      </div>
-      <DragOverlay>
-        {activeDragId ? (
-          <div className="w-72 opacity-95 pointer-events-none shadow-lg">
-            {(() => {
-              const activeEntry = entryById.get(activeDragId);
-              if (!activeEntry) {
-                return null;
-              }
-
-              return (
-                <MtCollectionBoardCard
-                  entry={activeEntry}
-                  isDragPreview={false}
-                  visiblePropertySet={visiblePropertySet}
-                  statusOptions={statusOptions}
-                  priorityOptions={priorityOptions}
-                  issueTypeOptions={issueTypeOptions}
-                  assigneeOptions={assigneeOptions}
-                  parentDisplayId={
-                    activeEntry?.parentId
-                      ? String(
-                          entryByConvexId.get(String(activeEntry.parentId))?.id ??
-                            entryByConvexId.get(String(activeEntry.parentId))?._id ??
-                            activeEntry.parentId,
-                        )
-                      : undefined
-                  }
-                />
-              );
-            })()}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+              })()}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </>
   );
 };

@@ -333,9 +333,7 @@ export function MtCollectionTaskListEntry({
                     value={toDateInputValue(entry?.[property.id])}
                     onChange={(event) => {
                       const nextValue = event.target.value;
-                      const nextTimestamp = nextValue
-                        ? new Date(`${nextValue}T00:00:00`).getTime()
-                        : undefined;
+                      const nextTimestamp = nextValue ? new Date(`${nextValue}T00:00:00`).getTime() : undefined;
                       onPropertyChange?.(property.id, nextTimestamp);
                     }}
                     className="w-32 rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-xs text-text-primary outline-none"

@@ -424,9 +424,10 @@ function SortableViewTab({
     opacity: isDragging ? 0.5 : undefined,
   };
 
-  const layoutName = view.layout && typeof view.layout === 'object' && 'name' in view.layout
-    ? (view.layout as { name?: string }).name
-    : undefined;
+  const layoutName =
+    view.layout && typeof view.layout === 'object' && 'name' in view.layout
+      ? (view.layout as { name?: string }).name
+      : undefined;
 
   return (
     <WithContextMenu

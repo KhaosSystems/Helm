@@ -141,7 +141,8 @@ export function useBoardDnd<TColumn extends BoardDndColumn>({
   const entryColumnById = React.useMemo(() => {
     const map = new Map<string, string>();
     columns.forEach((column) => {
-      const ids = columnOrder[column.key] ?? (entriesByColumn.get(column.key) ?? []).map((e: any) => String(e?.id ?? ''));
+      const ids =
+        columnOrder[column.key] ?? (entriesByColumn.get(column.key) ?? []).map((e: any) => String(e?.id ?? ''));
       ids.forEach((id) => map.set(id, column.key));
     });
     return map;
@@ -181,9 +182,7 @@ export function useBoardDnd<TColumn extends BoardDndColumn>({
         if (fromIndex < 0) return previous;
 
         sourceIds.splice(fromIndex, 1);
-        const destinationIndex = overId.startsWith('column:')
-          ? destinationIds.length
-          : destinationIds.indexOf(overId);
+        const destinationIndex = overId.startsWith('column:') ? destinationIds.length : destinationIds.indexOf(overId);
         const safeDestinationIndex = destinationIndex < 0 ? destinationIds.length : destinationIndex;
         destinationIds.splice(safeDestinationIndex, 0, activeId);
 
@@ -223,13 +222,9 @@ export function useBoardDnd<TColumn extends BoardDndColumn>({
               // Within-column reorder (handles both pure same-column drags and
               // repositioning after a cross-column move by onDragOver).
               setColumnOrder((previous) => {
-                const ids = [
-                  ...(previous[currentColumnKey] ?? defaultEntryIdsByColumn.get(currentColumnKey) ?? []),
-                ];
+                const ids = [...(previous[currentColumnKey] ?? defaultEntryIdsByColumn.get(currentColumnKey) ?? [])];
                 const fromIndex = ids.indexOf(activeId);
-                const toIndex = overId.startsWith('column:')
-                  ? ids.length - 1
-                  : ids.indexOf(overId);
+                const toIndex = overId.startsWith('column:') ? ids.length - 1 : ids.indexOf(overId);
                 if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return previous;
                 return { ...previous, [currentColumnKey]: arrayMove(ids, fromIndex, toIndex) };
               });
@@ -241,15 +236,11 @@ export function useBoardDnd<TColumn extends BoardDndColumn>({
               const sourceIds = [
                 ...(previous[currentColumnKey] ?? defaultEntryIdsByColumn.get(currentColumnKey) ?? []),
               ];
-              const destIds = [
-                ...(previous[overColumnKey] ?? defaultEntryIdsByColumn.get(overColumnKey) ?? []),
-              ];
+              const destIds = [...(previous[overColumnKey] ?? defaultEntryIdsByColumn.get(overColumnKey) ?? [])];
               const fromIndex = sourceIds.indexOf(activeId);
               if (fromIndex < 0) return previous;
               sourceIds.splice(fromIndex, 1);
-              const targetIndex = overId.startsWith('column:')
-                ? destIds.length
-                : destIds.indexOf(overId);
+              const targetIndex = overId.startsWith('column:') ? destIds.length : destIds.indexOf(overId);
               const safeTarget = targetIndex < 0 ? destIds.length : targetIndex;
               destIds.splice(safeTarget, 0, activeId);
               return {
@@ -319,7 +310,16 @@ export function useBoardDnd<TColumn extends BoardDndColumn>({
         isDraggingRef.current = false;
       }
     },
-    [columns, defaultEntryIdsByColumn, disableSameColumnReorder, entryById, entryColumnById, onCrossColumnMove, onPositionChange, onReorderBlocked],
+    [
+      columns,
+      defaultEntryIdsByColumn,
+      disableSameColumnReorder,
+      entryById,
+      entryColumnById,
+      onCrossColumnMove,
+      onPositionChange,
+      onReorderBlocked,
+    ],
   );
 
   const onDragCancel = React.useCallback(() => {

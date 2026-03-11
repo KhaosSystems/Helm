@@ -296,9 +296,7 @@ function DropIndicatorLine({ position, indent = 0 }: { position: 'before' | 'aft
       }`}
       style={{ left: indent > 0 ? `${indent}px` : 0 }}
     >
-      {indent > 0 && (
-        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500" />
-      )}
+      {indent > 0 && <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500" />}
     </div>
   );
 }
@@ -322,13 +320,7 @@ function DraggableDroppableRow({
     listeners: Record<string, unknown>;
   }) => React.ReactNode;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setDragRef,
-    setActivatorNodeRef,
-    isDragging,
-  } = useDraggable({ id });
+  const { attributes, listeners, setNodeRef: setDragRef, setActivatorNodeRef, isDragging } = useDraggable({ id });
   const { setNodeRef: setDropRef } = useDroppable({ id });
 
   const nodeRef = React.useCallback(
@@ -360,9 +352,7 @@ function DraggableDroppableRow({
     >
       {isDropBefore && <DropIndicatorLine position="before" indent={indicatorIndent} />}
       <div
-        className={`transition-shadow duration-150 ${
-          isDropChild ? 'ring-2 ring-blue-500 ring-inset rounded-sm' : ''
-        }`}
+        className={`transition-shadow duration-150 ${isDropChild ? 'ring-2 ring-blue-500 ring-inset rounded-sm' : ''}`}
       >
         {children({
           ref: setActivatorNodeRef,
@@ -496,10 +486,7 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [entriesForRows],
   );
   const orderedEntriesForRows = React.useMemo(
-    () =>
-      orderedEntryIds
-        .map((id) => entryById.get(id))
-        .filter((entry): entry is any => Boolean(entry)),
+    () => orderedEntryIds.map((id) => entryById.get(id)).filter((entry): entry is any => Boolean(entry)),
     [entryById, orderedEntryIds],
   );
   const rows = React.useMemo(
@@ -776,142 +763,144 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
 
   return (
     <>
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      measuring={{
-        droppable: { strategy: MeasuringStrategy.Always },
-      }}
-      onDragStart={(event) => {
-        setActiveDragId(String(event.active.id ?? ''));
-      }}
-      onDragMove={handleDragMove}
-      onDragCancel={() => {
-        setActiveDragId(null);
-        dropTargetRef.current = null;
-        setDropTarget(null);
-        if (dragMoveRafRef.current !== null) {
-          cancelAnimationFrame(dragMoveRafRef.current);
-          dragMoveRafRef.current = null;
-        }
-      }}
-      onDragEnd={(event) => {
-        handleDragEnd(event);
-        setActiveDragId(null);
-      }}
-      autoScroll
-    >
-      <div id="scroll-container" ref={scrollRef} className="h-full min-h-0 overflow-y-auto">
-        <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const row = rows[virtualRow.index];
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        measuring={{
+          droppable: { strategy: MeasuringStrategy.Always },
+        }}
+        onDragStart={(event) => {
+          setActiveDragId(String(event.active.id ?? ''));
+        }}
+        onDragMove={handleDragMove}
+        onDragCancel={() => {
+          setActiveDragId(null);
+          dropTargetRef.current = null;
+          setDropTarget(null);
+          if (dragMoveRafRef.current !== null) {
+            cancelAnimationFrame(dragMoveRafRef.current);
+            dragMoveRafRef.current = null;
+          }
+        }}
+        onDragEnd={(event) => {
+          handleDragEnd(event);
+          setActiveDragId(null);
+        }}
+        autoScroll
+      >
+        <div id="scroll-container" ref={scrollRef} className="h-full min-h-0 overflow-y-auto">
+          <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const row = rows[virtualRow.index];
 
-            if (!row) {
-              return null;
-            }
+              if (!row) {
+                return null;
+              }
 
-            if (row.type !== 'entry') {
+              if (row.type !== 'entry') {
+                return (
+                  <div
+                    key={row.key}
+                    className="absolute left-0 w-full"
+                    style={{ top: virtualRow.start, transition: 'top 200ms ease' }}
+                  >
+                    {renderRowContent(row)}
+                  </div>
+                );
+              }
+
+              const rowEntryId = String(row.entry?.id ?? '');
+
               return (
-                <div
+                <DraggableDroppableRow
                   key={row.key}
-                  className="absolute left-0 w-full"
-                  style={{ top: virtualRow.start, transition: 'top 200ms ease' }}
+                  id={rowEntryId}
+                  top={virtualRow.start}
+                  depth={row.depth}
+                  dropTarget={dropTarget}
+                  activeDragId={activeDragId}
                 >
-                  {renderRowContent(row)}
-                </div>
+                  {(dragHandleProps) => {
+                    if (EntryComponent) {
+                      return <EntryComponent entry={row.entry} />;
+                    }
+
+                    return (
+                      <MtCollectionTaskListEntry
+                        entry={row.entry}
+                        properties={properties}
+                        visiblePropertySet={visiblePropertySet}
+                        statusOptions={statusOptions}
+                        priorityOptions={priorityOptions}
+                        issueTypeOptions={issueTypeOptions}
+                        assigneeOptions={assigneeOptions}
+                        depth={row.depth}
+                        subtasksEnabled={subtasksEnabled}
+                        hasSubtasks={row.hasSubtasks}
+                        subtaskCount={row.subtaskCount}
+                        isExpanded={row.isExpanded}
+                        dragHandleProps={dragHandleProps}
+                        onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
+                        onAddSubtask={() => props.onAddSubtask?.(row.entry)}
+                        onSummaryChange={(nextSummary) => {
+                          applyEntryPatch(row.entry, { summary: nextSummary });
+                        }}
+                        onPriorityChange={(nextPriority) => {
+                          applyEntryPatch(row.entry, { priority: nextPriority });
+                        }}
+                        onStatusChange={(nextStatus) => {
+                          applyEntryPatch(row.entry, { status: nextStatus, state: nextStatus });
+                        }}
+                        onIssueTypeChange={(nextType) => {
+                          applyEntryPatch(row.entry, {
+                            type: nextType,
+                            entryType: nextType,
+                            issueType: nextType,
+                          });
+                        }}
+                        onPropertyChange={(propertyId, value) => {
+                          applyEntryPatch(row.entry, { [propertyId]: value });
+                        }}
+                        onAssigneeChange={(nextAssignee) => {
+                          applyEntryPatch(row.entry, { assignee: nextAssignee });
+                        }}
+                      />
+                    );
+                  }}
+                </DraggableDroppableRow>
               );
-            }
-
-            const rowEntryId = String(row.entry?.id ?? '');
-
-            return (
-              <DraggableDroppableRow
-                key={row.key}
-                id={rowEntryId}
-                top={virtualRow.start}
-                depth={row.depth}
-                dropTarget={dropTarget}
-                activeDragId={activeDragId}
-              >
-                {(dragHandleProps) => {
-                  if (EntryComponent) {
-                    return <EntryComponent entry={row.entry} />;
-                  }
-
-                  return (
+            })}
+          </div>
+        </div>
+        <DragOverlay
+          dropAnimation={{
+            duration: 200,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          {activeDragId
+            ? (() => {
+                const activeEntry = entryById.get(activeDragId);
+                if (!activeEntry) return null;
+                return (
+                  <div className="opacity-90 pointer-events-none bg-[#141414] border border-[#2A2A2A] rounded shadow-lg">
                     <MtCollectionTaskListEntry
-                      entry={row.entry}
+                      entry={activeEntry}
                       properties={properties}
                       visiblePropertySet={visiblePropertySet}
                       statusOptions={statusOptions}
                       priorityOptions={priorityOptions}
                       issueTypeOptions={issueTypeOptions}
                       assigneeOptions={assigneeOptions}
-                      depth={row.depth}
-                      subtasksEnabled={subtasksEnabled}
-                      hasSubtasks={row.hasSubtasks}
-                      subtaskCount={row.subtaskCount}
-                      isExpanded={row.isExpanded}
-                      dragHandleProps={dragHandleProps}
-                      onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
-                      onAddSubtask={() => props.onAddSubtask?.(row.entry)}
-                      onSummaryChange={(nextSummary) => {
-                        applyEntryPatch(row.entry, { summary: nextSummary });
-                      }}
-                      onPriorityChange={(nextPriority) => {
-                        applyEntryPatch(row.entry, { priority: nextPriority });
-                      }}
-                      onStatusChange={(nextStatus) => {
-                        applyEntryPatch(row.entry, { status: nextStatus, state: nextStatus });
-                      }}
-                      onIssueTypeChange={(nextType) => {
-                        applyEntryPatch(row.entry, {
-                          type: nextType,
-                          entryType: nextType,
-                          issueType: nextType,
-                        });
-                      }}
-                      onPropertyChange={(propertyId, value) => {
-                        applyEntryPatch(row.entry, { [propertyId]: value });
-                      }}
-                      onAssigneeChange={(nextAssignee) => {
-                        applyEntryPatch(row.entry, { assignee: nextAssignee });
-                      }}
+                      depth={0}
+                      subtasksEnabled={false}
                     />
-                  );
-                }}
-              </DraggableDroppableRow>
-            );
-          })}
-        </div>
-      </div>
-      <DragOverlay dropAnimation={{
-        duration: 200,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      }}>
-        {activeDragId
-          ? (() => {
-              const activeEntry = entryById.get(activeDragId);
-              if (!activeEntry) return null;
-              return (
-                <div className="opacity-90 pointer-events-none bg-[#141414] border border-[#2A2A2A] rounded shadow-lg">
-                  <MtCollectionTaskListEntry
-                    entry={activeEntry}
-                    properties={properties}
-                    visiblePropertySet={visiblePropertySet}
-                    statusOptions={statusOptions}
-                    priorityOptions={priorityOptions}
-                    issueTypeOptions={issueTypeOptions}
-                    assigneeOptions={assigneeOptions}
-                    depth={0}
-                    subtasksEnabled={false}
-                  />
-                </div>
-              );
-            })()
-          : null}
-      </DragOverlay>
-    </DndContext>
+                  </div>
+                );
+              })()
+            : null}
+        </DragOverlay>
+      </DndContext>
     </>
   );
 };
