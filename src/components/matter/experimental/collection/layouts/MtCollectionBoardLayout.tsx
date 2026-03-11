@@ -20,7 +20,6 @@ import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../M
 import {
   MtCollectionSummaryInput,
   MtIssueTypeSelect,
-  MtIssueTypePreview,
   MtPrioirtySelect,
   MtStateSelect,
 } from '../MtCollectionEntryControls';
@@ -111,7 +110,6 @@ function DefaultBoardEntry({
             ) : null}
             {showId ? (
               <>
-                {!showIssueType ? <MtIssueTypePreview value={entryType} options={issueTypeOptions} size={14} /> : null}
                 <div className="text-xs text-text-primary">{displayId}</div>
               </>
             ) : null}

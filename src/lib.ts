@@ -15,6 +15,7 @@ export {
   MtLowIcon,
   MtMediumIcon,
   MtOpenIcon,
+  MtSubgraphIcon,
 } from './components/matter/MtIcon';
 export { MtInlineToast } from './components/matter/MtInlineToast';
 export { MtInput } from './components/matter/MtInput';

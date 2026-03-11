@@ -80,7 +80,15 @@ const ENTRY_HEIGHT = 44;
 
 type FlatRow =
   | { type: 'group'; key: string; label: string; count: number }
-  | { type: 'entry'; key: string; entry: any; depth: number; hasSubtasks: boolean; isExpanded: boolean }
+  | {
+      type: 'entry';
+      key: string;
+      entry: any;
+      depth: number;
+      hasSubtasks: boolean;
+      subtaskCount: number;
+      isExpanded: boolean;
+    }
   | { type: 'add-subtask'; key: string; parentEntry: any; depth: number };
 
 function buildRows(
@@ -97,6 +105,7 @@ function buildRows(
         entry,
         depth: 0,
         hasSubtasks: false,
+        subtaskCount: 0,
         isExpanded: false,
       }));
     }
@@ -124,6 +133,7 @@ function buildRows(
           entry,
           depth: 0,
           hasSubtasks: false,
+          subtaskCount: 0,
           isExpanded: false,
         });
       });
@@ -157,6 +167,7 @@ function buildRows(
       entry,
       depth,
       hasSubtasks,
+      subtaskCount: children.length,
       isExpanded,
     });
 
@@ -423,6 +434,7 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
                   depth={row.depth}
                   subtasksEnabled={subtasksEnabled}
                   hasSubtasks={row.hasSubtasks}
+                  subtaskCount={row.subtaskCount}
                   isExpanded={row.isExpanded}
                   onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
                   onSummaryChange={(nextSummary) => {

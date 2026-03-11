@@ -1,3 +1,4 @@
+import React from 'react';
 import { MtSelect, MtSelectItem } from '../../MtSelect';
 import MtAvatar from '../../MtAvatar';
 import {
@@ -183,17 +184,78 @@ export function MtCollectionSummaryInput({
   value,
   onChange,
   placeholder = 'Summary...',
+  className,
+  inputSize,
+  contentWidthCh,
+  autoWidth,
+  minAutoWidthPx = 80,
+  maxAutoWidthPx,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  className?: string;
+  inputSize?: number;
+  contentWidthCh?: number;
+  autoWidth?: boolean;
+  minAutoWidthPx?: number;
+  maxAutoWidthPx?: number;
 }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [autoWidthPx, setAutoWidthPx] = React.useState<number | undefined>(undefined);
+
+  React.useLayoutEffect(() => {
+    if (!autoWidth || !inputRef.current || typeof document === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
+
+    const input = inputRef.current;
+    const inputStyle = window.getComputedStyle(input);
+    const textToMeasure = value || placeholder || '';
+
+    const measure = document.createElement('span');
+    measure.style.position = 'absolute';
+    measure.style.visibility = 'hidden';
+    measure.style.whiteSpace = 'pre';
+    measure.style.font = inputStyle.font;
+    measure.style.fontSize = inputStyle.fontSize;
+    measure.style.fontWeight = inputStyle.fontWeight;
+    measure.style.letterSpacing = inputStyle.letterSpacing;
+    measure.textContent = textToMeasure;
+
+    document.body.appendChild(measure);
+
+    const textWidth = measure.getBoundingClientRect().width;
+    const horizontalPadding = (parseFloat(inputStyle.paddingLeft) || 0) + (parseFloat(inputStyle.paddingRight) || 0);
+    const horizontalBorder =
+      (parseFloat(inputStyle.borderLeftWidth) || 0) + (parseFloat(inputStyle.borderRightWidth) || 0);
+    const nextWidth = Math.ceil(textWidth + horizontalPadding + horizontalBorder + 2);
+
+    document.body.removeChild(measure);
+
+    const minClampedWidth = Math.max(minAutoWidthPx, nextWidth);
+    setAutoWidthPx(maxAutoWidthPx ? Math.min(maxAutoWidthPx, minClampedWidth) : minClampedWidth);
+  }, [autoWidth, maxAutoWidthPx, minAutoWidthPx, placeholder, value]);
+
+  const widthStyle = autoWidth
+    ? {
+        width: `${autoWidthPx ?? minAutoWidthPx}px`,
+        maxWidth: '100%',
+        minWidth: 0,
+      }
+    : contentWidthCh
+      ? { width: `${contentWidthCh}ch`, maxWidth: '100%', minWidth: 0 }
+      : undefined;
+
   return (
     <input
+      ref={inputRef}
       value={value}
+      size={inputSize}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-[#2A2A2A]"
+      style={widthStyle}
+      className={`w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-[#2A2A2A] ${className ?? ''}`}
     />
   );
 }

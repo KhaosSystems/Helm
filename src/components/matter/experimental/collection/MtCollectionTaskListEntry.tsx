@@ -1,18 +1,34 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 import MtAvatar from '../../MtAvatar';
+import { MtButton } from '../../MtButton';
 import { MtCheckbox } from '../../MtCheckbox';
+import { MtSubgraphIcon } from '../../MtIcon';
 import {
   MtCollectionAssigneeDropdown,
   MtCollectionAssigneeOption,
   MtCollectionSummaryInput,
   MtIssueTypeSelect,
-  MtIssueTypePreview,
   MtPrioirtySelect,
   MtStateSelect,
 } from './MtCollectionEntryControls';
 import { useMtCollection } from './MtCollectionContext';
 import type { MtCollectionDiscreteValueOption } from './MtCollection';
+
+function MtTriangleCaret({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+      aria-hidden="true"
+    >
+      <path d="M3 2.25L7 5L3 7.75V2.25Z" fill="currentColor" stroke="currentColor" strokeWidth="0.6" />
+    </svg>
+  );
+}
 
 type MtCollectionTaskListEntryProps = {
   entry: any;
@@ -32,6 +48,8 @@ type MtCollectionTaskListEntryProps = {
   subtasksEnabled?: boolean;
   /** Whether this entry has subtasks. */
   hasSubtasks?: boolean;
+  /** Number of direct subtasks for this entry. */
+  subtaskCount?: number;
   /** Whether the subtask tree below this entry is expanded. */
   isExpanded?: boolean;
   /** Toggle expand/collapse. */
@@ -53,6 +71,7 @@ export function MtCollectionTaskListEntry({
   depth = 0,
   subtasksEnabled = false,
   hasSubtasks = false,
+  subtaskCount = 0,
   isExpanded = false,
   onToggleExpand,
 }: MtCollectionTaskListEntryProps) {
@@ -114,8 +133,9 @@ export function MtCollectionTaskListEntry({
           className={`shrink-0 flex items-center justify-center w-4 h-4 text-text-muted hover:text-text-primary transition-opacity ${hasSubtasks ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
           tabIndex={-1}
           aria-label={isExpanded ? 'Collapse subtasks' : 'Expand subtasks'}
+          disabled={!hasSubtasks}
         >
-          {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          <MtTriangleCaret expanded={isExpanded} />
         </button>
       ) : null}
 
@@ -143,7 +163,6 @@ export function MtCollectionTaskListEntry({
 
       {showId ? (
         <div className="flex items-center gap-1 text-text-primary min-w-0">
-          {!showIssueType ? <MtIssueTypePreview value={entryType} options={issueTypeOptions} size={14} /> : null}
           <span className="truncate">{displayId}</span>
         </div>
       ) : null}
@@ -161,9 +180,12 @@ export function MtCollectionTaskListEntry({
 
       {showName ? <span className="text-text-primary truncate max-w-40">{name || '—'}</span> : null}
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0">
         <MtCollectionSummaryInput
           value={summaryState}
+          autoWidth
+          minAutoWidthPx={88}
+          className="w-auto px-0"
           onChange={(nextSummary) => {
             setSummaryState(nextSummary);
             onSummaryChange?.(nextSummary);
@@ -171,19 +193,33 @@ export function MtCollectionTaskListEntry({
         />
       </div>
 
+      {subtasksEnabled && hasSubtasks ? (
+        <MtButton
+          variant="ghost"
+          className="shrink-0 px-1 text-text-muted hover:text-text-primary"
+          onClick={onToggleExpand}
+          aria-label={isExpanded ? 'Collapse subtasks' : 'Expand subtasks'}
+        >
+          <MtSubgraphIcon size={12} />
+          <span className="text-sm">{subtaskCount}</span>
+        </MtButton>
+      ) : null}
+
       {showAssignee ? (
-        assigneeOptions && assigneeOptions.length > 0 ? (
-          <MtCollectionAssigneeDropdown
-            assignee={assigneeState}
-            options={assigneeOptions}
-            onChange={(nextAssignee) => {
-              setAssigneeState(nextAssignee);
-              onAssigneeChange?.(nextAssignee);
-            }}
-          />
-        ) : (
-          <MtAvatar name={assignee} size="xs" />
-        )
+        <div className="ml-auto shrink-0">
+          {assigneeOptions && assigneeOptions.length > 0 ? (
+            <MtCollectionAssigneeDropdown
+              assignee={assigneeState}
+              options={assigneeOptions}
+              onChange={(nextAssignee) => {
+                setAssigneeState(nextAssignee);
+                onAssigneeChange?.(nextAssignee);
+              }}
+            />
+          ) : (
+            <MtAvatar name={assignee} size="xs" />
+          )}
+        </div>
       ) : null}
     </div>
   );

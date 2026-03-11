@@ -176,3 +176,27 @@ export function MtCheckIcon() {
     </svg>
   );
 }
+
+export function MtSubgraphIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clipPath="url(#clip0_mt_subgraph)">
+        <rect x="0.5" y="0.5" width="5" height="5" rx="2.5" stroke="currentColor" />
+        <rect x="8.5" y="8.5" width="5" height="5" rx="2.5" stroke="currentColor" />
+        <mask id="path-3-inside-1_mt_subgraph" fill="white">
+          <path d="M2.5 5.38232H8.56281V11.5H6.5C4.29086 11.5 2.5 9.70914 2.5 7.5V5.38232Z" />
+        </mask>
+        <path
+          d="M2.5 5.38232H8.56281H2.5M8.56281 12.5H6.5C3.73858 12.5 1.5 10.2614 1.5 7.5H3.5C3.5 9.15685 4.84315 10.5 6.5 10.5H8.56281V12.5ZM6.5 12.5C3.73858 12.5 1.5 10.2614 1.5 7.5V5.38232H3.5V7.5C3.5 9.15685 4.84315 10.5 6.5 10.5V12.5ZM6.5 10.5M8.56281 5.38232V11.5V5.38232"
+          fill="currentColor"
+          mask="url(#path-3-inside-1_mt_subgraph)"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_mt_subgraph">
+          <rect width="14" height="14" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+}
