@@ -16,7 +16,6 @@ import {
   type DragEndEvent,
   type DragMoveEvent,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowUpDown, ChevronRight, Columns3, Layers3, ListFilter, Plus, X } from 'lucide-react';
 import React from 'react';
