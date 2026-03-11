@@ -221,8 +221,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   }, [properties]);
 
   const currentView = viewState.find((view) => view.id === currentViewId) ?? null;
-  const currentViewQuickFilters =
-    ((currentView?.settings?.quickFilters as MtCollectionQuickFilterState | undefined) ?? {}) satisfies MtCollectionQuickFilterState;
+  const currentViewQuickFilters = ((currentView?.settings?.quickFilters as MtCollectionQuickFilterState | undefined) ??
+    {}) satisfies MtCollectionQuickFilterState;
 
   const setCurrentView = (nextView: MtCollectionView<T> | null) => {
     if (!nextView) {
