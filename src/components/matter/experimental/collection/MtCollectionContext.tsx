@@ -28,6 +28,14 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   hasCurrentViewUnsavedChanges: boolean;
   saveCurrentViewAsDefault: () => void | Promise<void>;
   revertCurrentViewToDefault: () => void;
+  /** Set of selected entry IDs. */
+  selectedIds: Set<string>;
+  /** Toggle selection for a single entry by its id. */
+  toggleSelected: (id: string) => void;
+  /** Clear all selections. */
+  clearSelection: () => void;
+  /** Callback to delete selected entries (no confirmation). Only present when consumer provides it. */
+  onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
 }
 
 export const MtCollectionContext = createContext<MtCollectionContextProps<any> | null>(null);

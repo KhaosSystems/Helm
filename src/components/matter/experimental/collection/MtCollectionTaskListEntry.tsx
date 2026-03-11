@@ -10,6 +10,7 @@ import {
   MtPrioirtySelect,
   MtStateSelect,
 } from './MtCollectionEntryControls';
+import { useMtCollection } from './MtCollectionContext';
 
 type MtCollectionTaskListEntryProps = {
   entry: any;
@@ -54,13 +55,17 @@ export function MtCollectionTaskListEntry({
   onToggleExpand,
 }: MtCollectionTaskListEntryProps) {
   const displayId = entry?.id ? String(entry.id) : '';
+  // Use the Convex _id as canonical id for selection; fall back to id.
+  const entrySelectionId = String(entry?._id ?? entry?.id ?? '');
   const name = entry?.name ? String(entry.name) : entry?.title ? String(entry.title) : '';
   const status = entry?.status ? String(entry.status) : entry?.state ? String(entry.state) : '';
   const priority = entry?.priority ? String(entry.priority) : undefined;
   const assignee = entry?.assignee ? String(entry.assignee) : '';
   const summary = entry?.summary ? String(entry.summary) : '';
   const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? 'user story').toLowerCase();
-  const isSelected = Boolean(entry?.selected);
+
+  const { selectedIds, toggleSelected } = useMtCollection();
+  const isSelected = entrySelectionId ? selectedIds.has(entrySelectionId) : false;
 
   const [summaryState, setSummaryState] = React.useState(summary);
   const [priorityState, setPriorityState] = React.useState(priority);
@@ -106,7 +111,14 @@ export function MtCollectionTaskListEntry({
       className="group flex items-center gap-2 px-4 border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
       style={{ paddingLeft: depth > 0 ? `${depth * 20 + 16}px` : undefined }}
     >
-      <div className={`${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+      <div
+        role="checkbox"
+        aria-checked={isSelected}
+        tabIndex={0}
+        onClick={() => entrySelectionId && toggleSelected(entrySelectionId)}
+        onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && entrySelectionId && toggleSelected(entrySelectionId)}
+        className={`shrink-0 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity cursor-pointer`}
+      >
         <MtCheckbox checked={isSelected} />
       </div>
 

@@ -14,10 +14,11 @@
  *  - [MUI DataGrid](https://mui.com/x/react-data-grid/)
  */
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { MtCollectionToolbar } from './MtCollectionToolbar';
 import { MtCollectionContext } from './MtCollectionContext';
 import { MtCollectionViewSettings } from './MtCollectionViewSettings';
+import { MtCollectionSelectionToolbar } from './MtCollectionSelectionToolbar';
 import type { MtCollectionAssigneeOption } from './MtCollectionEntryControls';
 
 /**
@@ -155,6 +156,8 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   onSaveView?: (view: MtCollectionView<T>) => Promise<string | void>;
   /** Delete a persisted view. */
   onDeleteView?: (viewId: string) => Promise<void>;
+  /** Bulk-delete entries by id. Called immediately with no confirmation dialog. */
+  onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
 }
 
 /**
@@ -177,6 +180,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   onAddSubtask,
   onSaveView,
   onDeleteView,
+  onDeleteEntries,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -184,6 +188,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   const [viewSettingsPageId, setViewSettingsPageId] = useState<string>('root');
   const [focusViewNameEditor, setFocusViewNameEditor] = useState(false);
   const [currentViewId, setCurrentViewId] = useState<string | null>(views[0]?.id ?? null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [defaultViewState, setDefaultViewState] = useState<Record<string, MtCollectionViewDefaultSnapshot>>(
     Object.fromEntries(views.map((view) => [view.id, buildViewDefaultSnapshot(view)])),
   );
@@ -349,6 +354,22 @@ export function MtCollection<T extends MtCollectionEntry>({
     });
   };
 
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
   const openViewSettings = (pageId = 'root', options?: { focusViewNameEditor?: boolean }) => {
     setViewSettingsPageId(pageId);
     setFocusViewNameEditor(Boolean(options?.focusViewNameEditor));
@@ -388,9 +409,13 @@ export function MtCollection<T extends MtCollectionEntry>({
         openViewSettings,
         properties: propertyState,
         setProperties: setPropertyState,
+        selectedIds,
+        toggleSelected,
+        clearSelection,
+        onDeleteEntries,
       }}
     >
-      <div className={`h-full min-h-0 flex flex-col border border-[#2A2A2A] bg-[#111111] rounded ${className}`}>
+      <div className={`relative h-full min-h-0 flex flex-col border border-[#2A2A2A] bg-[#111111] rounded ${className}`}>
         {/* Toolbar rendering logic */}
         {toolbar === undefined && <MtCollectionToolbar /*<T>*/ />}
         {toolbar !== undefined &&
@@ -424,6 +449,9 @@ export function MtCollection<T extends MtCollectionEntry>({
             {isViewSettingsOpen ? viewSettings : null}
           </div>
         </div>
+
+        {/* Selection overlay toolbar — floats above content when entries are selected */}
+        <MtCollectionSelectionToolbar />
       </div>
     </MtCollectionContext.Provider>
   );
