@@ -1,10 +1,10 @@
 // Collection main widget and layouts
 export { MtCollection } from './MtCollection';
 export type {
-	MtCollectionDiscreteValueOption,
-	MtCollectionEntry,
-	MtCollectionProps,
-	MtCollectionView,
+  MtCollectionDiscreteValueOption,
+  MtCollectionEntry,
+  MtCollectionProps,
+  MtCollectionView,
 } from './MtCollection';
 
 // Layouts

@@ -210,7 +210,10 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [props.properties],
   );
   const statusOptions = React.useMemo(
-    () => getDiscreteValueStrings(properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues),
+    () =>
+      getDiscreteValueStrings(
+        properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+      ),
     [properties],
   );
   const priorityOptions = React.useMemo(

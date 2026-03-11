@@ -1,13 +1,5 @@
 import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
-import {
-  ArrowUpDown,
-  ChevronRight,
-  Columns3,
-  CornerLeftUp,
-  Layers3,
-  ListFilter,
-  X,
-} from 'lucide-react';
+import { ArrowUpDown, ChevronRight, Columns3, CornerLeftUp, Layers3, ListFilter, X } from 'lucide-react';
 import { MtDrawerMenuItem, MtDrawerMenuPage, MtDrawerMenuSection } from '../MtCollectionViewSettings';
 import { useMtCollection } from '../MtCollectionContext';
 import React from 'react';
@@ -191,7 +183,10 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
     [props.properties],
   );
   const statusOptions = React.useMemo(
-    () => getDiscreteValueStrings(properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues),
+    () =>
+      getDiscreteValueStrings(
+        properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+      ),
     [properties],
   );
   const priorityOptions = React.useMemo(
