@@ -23,9 +23,7 @@ export function MtCollectionSelectionToolbar() {
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-3 py-2 rounded-lg border border-[#3a3a3a] bg-[#1c1c1c] shadow-xl text-sm select-none">
       {/* Count */}
-      <span className="text-text-muted pr-2 tabular-nums whitespace-nowrap">
-        {selectedIds.size} selected
-      </span>
+      <span className="text-text-muted pr-2 tabular-nums whitespace-nowrap">{selectedIds.size} selected</span>
 
       <div className="w-px h-4 bg-[#3a3a3a] mx-1" />
 

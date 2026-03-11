@@ -415,7 +415,9 @@ export function MtCollection<T extends MtCollectionEntry>({
         onDeleteEntries,
       }}
     >
-      <div className={`relative h-full min-h-0 flex flex-col border border-[#2A2A2A] bg-[#111111] rounded ${className}`}>
+      <div
+        className={`relative h-full min-h-0 flex flex-col border border-[#2A2A2A] bg-[#111111] rounded ${className}`}
+      >
         {/* Toolbar rendering logic */}
         {toolbar === undefined && <MtCollectionToolbar /*<T>*/ />}
         {toolbar !== undefined &&
