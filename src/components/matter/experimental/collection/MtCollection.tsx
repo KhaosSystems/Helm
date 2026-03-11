@@ -28,11 +28,18 @@ export interface MtCollectionEntry {
   id: any;
 }
 
+export interface MtCollectionDiscreteValueOption {
+  value: string;
+  label?: string;
+  icon?: string;
+  color?: string;
+}
+
 export interface MtCollectionProperty {
   id: string;
   label: string;
   groupable?: boolean;
-  discreteValues?: string[];
+  discreteValues?: Array<string | MtCollectionDiscreteValueOption>;
 }
 
 export interface MtCollectionViewSettingsState {

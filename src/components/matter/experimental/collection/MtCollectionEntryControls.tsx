@@ -9,7 +9,9 @@ import {
   MtMediumIcon,
   MtOpenIcon,
 } from '../../MtIcon';
-import { Bookmark, Bug, CircleSlash2, Copy, FileText, ListTodo, Sparkles } from 'lucide-react';
+import { CircleHelp, CircleSlash2, Copy } from 'lucide-react';
+import { MtIconPreview } from '../../MtIconSelect';
+import type { MtCollectionDiscreteValueOption } from './MtCollection';
 
 export type MtCollectionAssigneeOption = {
   value: string;
@@ -35,19 +37,52 @@ const STATUS_OPTIONS = [
   { value: 'duplicate', label: 'Duplicate', icon: <Copy size={14} stroke="#9CA3AF" /> },
 ];
 
-const ISSUE_TYPE_OPTIONS = [
-  { value: 'user story', label: 'User story', icon: <Bookmark size={14} stroke="#60A5FA" /> },
-  { value: 'bug', label: 'Bug', icon: <Bug size={14} stroke="#EF4444" /> },
-  { value: 'docs', label: 'Docs', icon: <FileText size={14} stroke="#A78BFA" /> },
-  { value: 'feature', label: 'Feature', icon: <Sparkles size={14} stroke="#F59E0B" /> },
-  { value: 'task', label: 'Task', icon: <ListTodo size={14} stroke="#22C55E" /> },
-];
-
 type MtSelectOption = {
   value: string;
   label: string;
   icon?: React.ReactNode;
 };
+
+function isDiscreteValueOption(
+  value: string | MtCollectionDiscreteValueOption,
+): value is MtCollectionDiscreteValueOption {
+  return typeof value === 'object' && value !== null && 'value' in value;
+}
+
+function getDiscreteValueOption(
+  options: Array<string | MtCollectionDiscreteValueOption> | undefined,
+  value: string | undefined,
+) {
+  if (!options || !value) return undefined;
+  return options.find((option) => isDiscreteValueOption(option) && option.value === value) as
+    | MtCollectionDiscreteValueOption
+    | undefined;
+}
+
+export function getIssueTypeOption(
+  options: Array<string | MtCollectionDiscreteValueOption> | undefined,
+  value: string | undefined,
+) {
+  return getDiscreteValueOption(options, value);
+}
+
+export function MtIssueTypePreview({
+  value,
+  options,
+  size = 14,
+}: {
+  value?: string;
+  options?: Array<string | MtCollectionDiscreteValueOption>;
+  size?: number;
+}) {
+  const configuredOption = getIssueTypeOption(options, value);
+
+  if (configuredOption?.icon) {
+    return <MtIconPreview name={configuredOption.icon} size={size} color={configuredOption.color} />;
+  }
+
+  return <CircleHelp size={size} className="text-text-muted" />;
+}
 
 function titleCaseLabel(value: string) {
   return value
@@ -57,13 +92,26 @@ function titleCaseLabel(value: string) {
     .join(' ');
 }
 
-function normalizeOptions(values: string[] | undefined, fallback: MtSelectOption[]) {
+function normalizeOptions(
+  values: Array<string | MtCollectionDiscreteValueOption> | undefined,
+  fallback: MtSelectOption[],
+) {
   if (!values || values.length === 0) {
     return fallback;
   }
 
   const fallbackByValue = new Map(fallback.map((option) => [option.value, option]));
-  return values.map((value) => fallbackByValue.get(value) ?? { value, label: titleCaseLabel(value) });
+  return values.map((value) => {
+    if (isDiscreteValueOption(value)) {
+      return {
+        value: value.value,
+        label: value.label ?? titleCaseLabel(value.value),
+        icon: value.icon ? <MtIconPreview name={value.icon} size={14} color={value.color} /> : undefined,
+      } satisfies MtSelectOption;
+    }
+
+    return fallbackByValue.get(value) ?? { value, label: titleCaseLabel(value) };
+  });
 }
 
 export function MtPrioritySelect({
@@ -73,7 +121,7 @@ export function MtPrioritySelect({
 }: {
   value?: string;
   onChange: (value: string) => void;
-  options?: string[];
+  options?: Array<string | MtCollectionDiscreteValueOption>;
 }) {
   return (
     <MtSelect
@@ -96,7 +144,7 @@ export function MtStateSelect({
 }: {
   value?: string;
   onChange: (value: string) => void;
-  options?: string[];
+  options?: Array<string | MtCollectionDiscreteValueOption>;
 }) {
   return (
     <MtSelect
@@ -117,7 +165,7 @@ export function MtIssueTypeSelect({
 }: {
   value?: string;
   onChange: (value: string) => void;
-  options?: string[];
+  options?: Array<string | MtCollectionDiscreteValueOption>;
 }) {
   return (
     <MtSelect
@@ -126,7 +174,7 @@ export function MtIssueTypeSelect({
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={normalizeOptions(options, ISSUE_TYPE_OPTIONS)}
+      options={normalizeOptions(options, [])}
     />
   );
 }

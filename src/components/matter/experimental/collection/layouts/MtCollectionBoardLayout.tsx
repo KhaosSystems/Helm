@@ -1,16 +1,11 @@
 import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
 import {
   ArrowUpDown,
-  Bookmark,
-  Bug,
   ChevronRight,
   Columns3,
   CornerLeftUp,
-  FileText,
   Layers3,
   ListFilter,
-  ListTodo,
-  Sparkles,
   X,
 } from 'lucide-react';
 import { MtDrawerMenuItem, MtDrawerMenuPage, MtDrawerMenuSection } from '../MtCollectionViewSettings';
@@ -33,6 +28,7 @@ import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../M
 import {
   MtCollectionSummaryInput,
   MtIssueTypeSelect,
+  MtIssueTypePreview,
   MtPrioirtySelect,
   MtStateSelect,
 } from '../MtCollectionEntryControls';
@@ -40,6 +36,7 @@ import { MtFilterDropdown } from '../../../MtFilter';
 import { MtSortDropdown, MtSortRule } from '../../../MtSort';
 import { MtDropdown, MtDropdownItem } from '../../../MtDropdown';
 import { MtButton } from '../../../MtButton';
+import type { MtCollectionDiscreteValueOption } from '../MtCollection';
 
 const REQUIRED_VISIBLE_PROPERTY_IDS = ['summary'];
 
@@ -59,6 +56,10 @@ function buildBoardPropertyOptions(properties: Array<{ id: string; label: string
   }
 
   return options;
+}
+
+function getDiscreteValueStrings(values: Array<string | MtCollectionDiscreteValueOption> | undefined) {
+  return (values ?? []).map((value) => (typeof value === 'string' ? value : value.value));
 }
 
 /** Default card component used when no renderEntry is provided. */
@@ -83,14 +84,14 @@ function DefaultBoardEntry({
   parentDisplayId?: string;
   statusOptions?: string[];
   priorityOptions?: string[];
-  issueTypeOptions?: string[];
+  issueTypeOptions?: Array<string | MtCollectionDiscreteValueOption>;
 }) {
   const displayId = getCollectionEntryId(entry);
   const priority = getCollectionEntryPriority(entry);
   const status = entry?.status ? String(entry.status) : entry?.state ? String(entry.state) : '';
   const assignee = getCollectionEntryAssignee(entry);
   const summary = getCollectionEntrySummary(entry);
-  const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? 'user story').toLowerCase();
+  const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? '').toLowerCase();
   const showSummary = visiblePropertySet.has('summary');
   const showId = visiblePropertySet.has('id');
   const showStatus = visiblePropertySet.has('status') || visiblePropertySet.has('state');
@@ -99,23 +100,6 @@ function DefaultBoardEntry({
   const showPriority = visiblePropertySet.has('priority');
   const showAssignee = visiblePropertySet.has('assignee');
   const showMetaRow = showId || showIssueType || showStatus || showPriority || showAssignee;
-
-  const EntryTypeIcon = (() => {
-    switch (entryType) {
-      case 'bug':
-        return Bug;
-      case 'docs':
-      case 'documentation':
-        return FileText;
-      case 'feature':
-        return Sparkles;
-      case 'task':
-        return ListTodo;
-      case 'user story':
-      default:
-        return Bookmark;
-    }
-  })();
 
   return (
     <div className="rounded border border-[#2A2A2A] bg-[#141414] p-3 text-sm">
@@ -135,7 +119,7 @@ function DefaultBoardEntry({
             ) : null}
             {showId ? (
               <>
-                {!showIssueType ? <EntryTypeIcon size={14} stroke="#608a23" /> : null}
+                {!showIssueType ? <MtIssueTypePreview value={entryType} options={issueTypeOptions} size={14} /> : null}
                 <div className="text-xs text-text-primary">{displayId}</div>
               </>
             ) : null}
@@ -173,7 +157,7 @@ function groupEntries(entries: any[], groupBy?: string | null, properties?: Arra
 
   // Find property metadata for discrete values
   const groupProperty = properties?.find((p) => p.id === groupBy);
-  const discreteValues = (groupProperty?.discreteValues as string[] | undefined) ?? [];
+  const discreteValues = getDiscreteValueStrings(groupProperty?.discreteValues);
 
   // If property has discrete values, ensure all are represented as columns
   if (discreteValues.length > 0) {
@@ -207,11 +191,11 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
     [props.properties],
   );
   const statusOptions = React.useMemo(
-    () => properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+    () => getDiscreteValueStrings(properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues),
     [properties],
   );
   const priorityOptions = React.useMemo(
-    () => properties.find((property) => property.id === 'priority')?.discreteValues,
+    () => getDiscreteValueStrings(properties.find((property) => property.id === 'priority')?.discreteValues),
     [properties],
   );
   const issueTypeOptions = React.useMemo(

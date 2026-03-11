@@ -1,4 +1,8 @@
-import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
+import {
+  MtCollectionDiscreteValueOption,
+  MtCollectionLayoutComponent,
+  MtCollectionLayoutSettingsProps,
+} from '../MtCollection';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowUpDown, ChevronRight, Columns3, Layers3, ListFilter, Plus, X } from 'lucide-react';
 import React from 'react';
@@ -39,6 +43,10 @@ function buildListPropertyOptions(properties: Array<{ id: string; label: string;
   }
 
   return options;
+}
+
+function getDiscreteValueStrings(values: Array<string | MtCollectionDiscreteValueOption> | undefined) {
+  return (values ?? []).map((value) => (typeof value === 'string' ? value : value.value));
 }
 
 function MtCollectionListGroup({ label, count }: { label: string; count: number }) {
@@ -202,11 +210,11 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [props.properties],
   );
   const statusOptions = React.useMemo(
-    () => properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues,
+    () => getDiscreteValueStrings(properties.find((property) => property.id === 'status' || property.id === 'state')?.discreteValues),
     [properties],
   );
   const priorityOptions = React.useMemo(
-    () => properties.find((property) => property.id === 'priority')?.discreteValues,
+    () => getDiscreteValueStrings(properties.find((property) => property.id === 'priority')?.discreteValues),
     [properties],
   );
   const issueTypeOptions = React.useMemo(

@@ -10,17 +10,25 @@ import { MtCollectionTaskListEntry } from './MtCollectionTaskListEntry';
 
 interface MyEntry extends MtCollectionEntry {
   selected?: boolean;
-  type?: 'user story' | 'bug' | 'docs' | 'feature' | 'task';
+  type?: string;
   status?: 'open' | 'in progress' | 'backlog' | 'done';
   priority?: 'low' | 'medium' | 'high';
   summary?: string;
   assignee?: string;
 }
 
+const storyIssueTypes = [
+  { value: 'alpha', label: 'Alpha', icon: 'rocket', color: '#a855f7' },
+  { value: 'beta', label: 'Beta', icon: 'bug', color: '#ef4444' },
+  { value: 'gamma', label: 'Gamma', icon: 'bookmark', color: '#3b82f6' },
+  { value: 'delta', label: 'Delta', icon: 'sparkles', color: '#f59e0b' },
+  { value: 'omega', label: 'Omega', icon: 'list-todo', color: '#22c55e' },
+];
+
 const entries: MyEntry[] = new Array(10).fill(null).map((_, i) => ({
   id: `PRJ-${i}`,
   name: `Entry ${i}`,
-  type: i % 5 === 0 ? 'bug' : i % 5 === 1 ? 'docs' : i % 5 === 2 ? 'feature' : i % 5 === 3 ? 'task' : 'user story',
+  type: storyIssueTypes[i % storyIssueTypes.length]?.value,
   status: i % 4 === 0 ? 'open' : i % 4 === 1 ? 'in progress' : i % 4 === 2 ? 'backlog' : 'done',
   priority: i % 3 === 0 ? 'low' : i % 3 === 1 ? 'medium' : 'high',
   summary: `This is the summary for entry ${i}.`,
@@ -28,7 +36,7 @@ const entries: MyEntry[] = new Array(10).fill(null).map((_, i) => ({
 
 const properties = [
   { id: 'id', label: 'ID' },
-  { id: 'type', label: 'Type' },
+  { id: 'type', label: 'Type', discreteValues: storyIssueTypes },
   { id: 'name', label: 'Name' },
   { id: 'status', label: 'Status', groupable: true },
   { id: 'priority', label: 'Priority', groupable: true },

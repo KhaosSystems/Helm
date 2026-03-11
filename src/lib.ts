@@ -32,3 +32,5 @@ export type { MtTreeItem } from './components/matter/MtTree';
 export { MtAlert } from './components/matter/MtAlert';
 export { default as MtAvatar } from './components/matter/MtAvatar';
 export { default as MtAvatarGroup } from './components/matter/MtAvatarGroup';
+export { MtIconSelect, MtIconPreview, ICON_MAP } from './components/matter/MtIconSelect';
+export type { MtIconSelectProps } from './components/matter/MtIconSelect';

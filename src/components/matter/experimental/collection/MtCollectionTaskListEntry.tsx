@@ -1,4 +1,4 @@
-import { Bookmark, Bug, ChevronDown, ChevronRight, FileText, ListTodo, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 import MtAvatar from '../../MtAvatar';
 import { MtCheckbox } from '../../MtCheckbox';
@@ -7,17 +7,19 @@ import {
   MtCollectionAssigneeOption,
   MtCollectionSummaryInput,
   MtIssueTypeSelect,
+  MtIssueTypePreview,
   MtPrioirtySelect,
   MtStateSelect,
 } from './MtCollectionEntryControls';
 import { useMtCollection } from './MtCollectionContext';
+import type { MtCollectionDiscreteValueOption } from './MtCollection';
 
 type MtCollectionTaskListEntryProps = {
   entry: any;
   visiblePropertySet: Set<string>;
   statusOptions?: string[];
   priorityOptions?: string[];
-  issueTypeOptions?: string[];
+  issueTypeOptions?: Array<string | MtCollectionDiscreteValueOption>;
   onSummaryChange?: (nextSummary: string) => void;
   onPriorityChange?: (nextPriority: string) => void;
   onStatusChange?: (nextStatus: string) => void;
@@ -62,7 +64,7 @@ export function MtCollectionTaskListEntry({
   const priority = entry?.priority ? String(entry.priority) : undefined;
   const assignee = entry?.assignee ? String(entry.assignee) : '';
   const summary = entry?.summary ? String(entry.summary) : '';
-  const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? 'user story').toLowerCase();
+  const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? '').toLowerCase();
 
   const { selectedIds, toggleSelected } = useMtCollection();
   const isSelected = entrySelectionId ? selectedIds.has(entrySelectionId) : false;
@@ -88,23 +90,6 @@ export function MtCollectionTaskListEntry({
     visiblePropertySet.has('type') || visiblePropertySet.has('entryType') || visiblePropertySet.has('issueType');
   const showPriority = visiblePropertySet.has('priority');
   const showAssignee = visiblePropertySet.has('assignee');
-
-  const EntryTypeIcon = (() => {
-    switch (entryType) {
-      case 'bug':
-        return Bug;
-      case 'docs':
-      case 'documentation':
-        return FileText;
-      case 'feature':
-        return Sparkles;
-      case 'task':
-        return ListTodo;
-      case 'user story':
-      default:
-        return Bookmark;
-    }
-  })();
 
   return (
     <div
@@ -158,7 +143,7 @@ export function MtCollectionTaskListEntry({
 
       {showId ? (
         <div className="flex items-center gap-1 text-text-primary min-w-0">
-          {!showIssueType ? <EntryTypeIcon size={14} stroke="#608a23" /> : null}
+          {!showIssueType ? <MtIssueTypePreview value={entryType} options={issueTypeOptions} size={14} /> : null}
           <span className="truncate">{displayId}</span>
         </div>
       ) : null}
