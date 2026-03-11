@@ -34,6 +34,7 @@ function MtTriangleCaret({ expanded }: { expanded: boolean }) {
 type MtCollectionTaskListEntryProps = {
   entry: any;
   visiblePropertySet: Set<string>;
+  properties?: Array<{ id: string; label: string }>;
   statusOptions?: string[];
   priorityOptions?: string[];
   issueTypeOptions?: Array<string | MtCollectionDiscreteValueOption>;
@@ -43,6 +44,7 @@ type MtCollectionTaskListEntryProps = {
   onIssueTypeChange?: (nextType: string) => void;
   assigneeOptions?: MtCollectionAssigneeOption[];
   onAssigneeChange?: (nextAssignee?: string) => void;
+  onPropertyChange?: (propertyId: string, value: unknown) => void;
   /** Nesting depth for subtask indentation (0 = top-level). */
   depth?: number;
   /** Whether subtask support is active for this collection. */
@@ -62,6 +64,7 @@ type MtCollectionTaskListEntryProps = {
 export function MtCollectionTaskListEntry({
   entry,
   visiblePropertySet,
+  properties,
   statusOptions,
   priorityOptions,
   issueTypeOptions,
@@ -71,6 +74,7 @@ export function MtCollectionTaskListEntry({
   onIssueTypeChange,
   assigneeOptions,
   onAssigneeChange,
+  onPropertyChange,
   depth = 0,
   subtasksEnabled = false,
   hasSubtasks = false,
@@ -113,6 +117,62 @@ export function MtCollectionTaskListEntry({
     visiblePropertySet.has('type') || visiblePropertySet.has('entryType') || visiblePropertySet.has('issueType');
   const showPriority = visiblePropertySet.has('priority');
   const showAssignee = visiblePropertySet.has('assignee');
+
+  const trailingProperties = React.useMemo(() => {
+    if (!properties || properties.length === 0) {
+      return [] as Array<{ id: string; label: string }>;
+    }
+
+    const handledPropertyIds = new Set([
+      'id',
+      'name',
+      'title',
+      'status',
+      'state',
+      'type',
+      'entryType',
+      'issueType',
+      'priority',
+      'assignee',
+      'summary',
+    ]);
+
+    return properties.filter(
+      (property: { id: string; label: string }) =>
+        visiblePropertySet.has(property.id) && !handledPropertyIds.has(property.id),
+    );
+  }, [properties, visiblePropertySet]);
+
+  const formatPropertyValue = React.useCallback((propertyId: string, rawValue: unknown) => {
+    if (rawValue === null || rawValue === undefined || rawValue === '') {
+      return '—';
+    }
+
+    if ((propertyId === 'startDate' || propertyId === 'dueDate') && typeof rawValue === 'number') {
+      const date = new Date(rawValue);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString();
+      }
+    }
+
+    return String(rawValue);
+  }, []);
+
+  const toDateInputValue = React.useCallback((rawValue: unknown) => {
+    if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) {
+      return '';
+    }
+
+    const date = new Date(rawValue);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
 
   return (
     <div
@@ -223,20 +283,76 @@ export function MtCollectionTaskListEntry({
         </div>
       ) : null}
 
-      {showAssignee ? (
-        <div className="ml-auto shrink-0">
-          {assigneeOptions && assigneeOptions.length > 0 ? (
-            <MtCollectionAssigneeDropdown
-              assignee={assigneeState}
-              options={assigneeOptions}
-              onChange={(nextAssignee) => {
-                setAssigneeState(nextAssignee);
-                onAssigneeChange?.(nextAssignee);
-              }}
-            />
-          ) : (
-            <MtAvatar name={assignee} size="xs" />
-          )}
+      {trailingProperties.length > 0 || showAssignee ? (
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          {trailingProperties.map((property: { id: string; label: string }) => {
+            const isDateProperty = property.id === 'startDate' || property.id === 'dueDate';
+            const isTimeEstimateProperty = property.id === 'timeEstimate';
+
+            if (isDateProperty) {
+              return (
+                <label key={property.id} className="flex items-center gap-1 text-xs text-text-muted">
+                  <span>{property.label}:</span>
+                  <input
+                    type="date"
+                    value={toDateInputValue(entry?.[property.id])}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      const nextTimestamp = nextValue
+                        ? new Date(`${nextValue}T00:00:00`).getTime()
+                        : undefined;
+                      onPropertyChange?.(property.id, nextTimestamp);
+                    }}
+                    className="w-32 rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-xs text-text-primary outline-none"
+                  />
+                </label>
+              );
+            }
+
+            if (isTimeEstimateProperty) {
+              return (
+                <label key={property.id} className="flex items-center gap-1 text-xs text-text-muted">
+                  <span>{property.label}:</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={typeof entry?.[property.id] === 'number' ? String(entry[property.id]) : ''}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      const parsedValue = nextValue === '' ? undefined : Number(nextValue);
+                      onPropertyChange?.(property.id, Number.isFinite(parsedValue as number) ? parsedValue : undefined);
+                    }}
+                    className="w-20 rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-xs text-text-primary outline-none"
+                  />
+                </label>
+              );
+            }
+
+            return (
+              <div key={property.id} className="flex items-center gap-1 text-xs text-text-muted">
+                <span>{property.label}:</span>
+                <span className="text-text-primary">{formatPropertyValue(property.id, entry?.[property.id])}</span>
+              </div>
+            );
+          })}
+
+          {showAssignee ? (
+            <div className="shrink-0">
+              {assigneeOptions && assigneeOptions.length > 0 ? (
+                <MtCollectionAssigneeDropdown
+                  assignee={assigneeState}
+                  options={assigneeOptions}
+                  onChange={(nextAssignee) => {
+                    setAssigneeState(nextAssignee);
+                    onAssigneeChange?.(nextAssignee);
+                  }}
+                />
+              ) : (
+                <MtAvatar name={assignee} size="xs" />
+              )}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

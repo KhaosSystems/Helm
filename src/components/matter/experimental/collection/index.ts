@@ -13,6 +13,7 @@ export { MtCollectionGridLayout } from './layouts/MtCollectionGridLayout';
 export { MtCollectionTableLayout } from './layouts/MtCollectionTableLayout';
 export { MtCollectionBoardLayout } from './layouts/MtCollectionBoardLayout';
 export { MtCollectionGanttLayout } from './layouts/MtCollectionGanttLayout';
+export { MtCollectionPlanLayout } from './layouts/MtCollectionPlanLayout';
 
 // Toolbar
 export { MtCollectionToolbar } from './MtCollectionToolbar';

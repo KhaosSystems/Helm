@@ -426,6 +426,7 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
               ) : (
                 <MtCollectionTaskListEntry
                   entry={row.entry}
+                  properties={properties}
                   visiblePropertySet={visiblePropertySet}
                   statusOptions={statusOptions}
                   priorityOptions={priorityOptions}
@@ -453,6 +454,9 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
                       entryType: nextType,
                       issueType: nextType,
                     });
+                  }}
+                  onPropertyChange={(propertyId, value) => {
+                    applyEntryPatch(row.entry, { [propertyId]: value });
                   }}
                   onAssigneeChange={(nextAssignee) => {
                     applyEntryPatch(row.entry, { assignee: nextAssignee });
