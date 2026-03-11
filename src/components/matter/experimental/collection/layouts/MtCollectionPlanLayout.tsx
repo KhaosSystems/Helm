@@ -278,7 +278,13 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
               const totalEstimate = entryIds.reduce((sum, id) => sum + getEntryTimeEstimate(entryById.get(id)), 0);
 
               return (
-                <DroppableColumn key={column.key} columnKey={column.key} label={column.label} trailing={totalEstimate} entryIds={entryIds}>
+                <DroppableColumn
+                  key={column.key}
+                  columnKey={column.key}
+                  label={column.label}
+                  trailing={totalEstimate}
+                  entryIds={entryIds}
+                >
                   {entryIds.map((entryId) => {
                     const entry = entryById.get(entryId);
                     if (!entry) {

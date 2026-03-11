@@ -280,11 +280,7 @@ export function DroppableColumn({
       </div>
 
       <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>
-        <div
-          className="flex flex-1 flex-col gap-2 overflow-y-auto p-2"
-        >
-          {children}
-        </div>
+        <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-2">{children}</div>
       </SortableContext>
     </div>
   );
