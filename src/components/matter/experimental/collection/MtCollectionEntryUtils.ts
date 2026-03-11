@@ -290,6 +290,15 @@ export function applyCollectionSort(entries: any[], sortRules: MtSortRule[] | un
       return 0;
     }
 
+    // Primary sort: manual position (higher = closer to top).
+    // Items without a position (undefined/null) are treated as 0.
+    const leftPos = typeof left?.position === 'number' ? left.position : 0;
+    const rightPos = typeof right?.position === 'number' ? right.position : 0;
+    if (leftPos !== rightPos) {
+      return rightPos - leftPos;
+    }
+
+    // Secondary sort: fallback field (e.g. updated time)
     return compareByField(left, right, fallbackSortBy);
   });
 

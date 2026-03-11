@@ -26,6 +26,7 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   addView: (view: MtCollectionView<T>) => void | Promise<void>;
   updateView: (viewId: string, patch: Partial<MtCollectionView<T>>) => void;
   deleteView: (viewId: string) => void | Promise<void>;
+  reorderViews: (viewIds: string[]) => void | Promise<void>;
   hasCurrentViewUnsavedChanges: boolean;
   saveCurrentViewAsDefault: () => void | Promise<void>;
   revertCurrentViewToDefault: () => void;

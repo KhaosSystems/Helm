@@ -171,6 +171,8 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   onDeleteView?: (viewId: string) => Promise<void>;
   /** Bulk-delete entries by id. Called immediately with no confirmation dialog. */
   onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
+  /** Persist a reordered list of view IDs. */
+  onReorderViews?: (viewIds: string[]) => void | Promise<void>;
 }
 
 /**
@@ -195,6 +197,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   onSaveView,
   onDeleteView,
   onDeleteEntries,
+  onReorderViews,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -297,6 +300,14 @@ export function MtCollection<T extends MtCollectionEntry>({
       delete nextDefaults[viewId];
       return nextDefaults;
     });
+  };
+
+  const reorderViews = async (viewIds: string[]) => {
+    setViewState((previousViews) => {
+      const viewMap = new Map(previousViews.map((view) => [view.id, view]));
+      return viewIds.map((id) => viewMap.get(id)).filter(Boolean) as MtCollectionView<T>[];
+    });
+    await onReorderViews?.(viewIds);
   };
 
   const hasCurrentViewUnsavedChanges = (() => {
@@ -445,6 +456,7 @@ export function MtCollection<T extends MtCollectionEntry>({
         addView,
         updateView,
         deleteView,
+        reorderViews,
         hasCurrentViewUnsavedChanges,
         saveCurrentViewAsDefault,
         revertCurrentViewToDefault,

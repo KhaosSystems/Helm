@@ -3,6 +3,20 @@ import {
   MtCollectionLayoutComponent,
   MtCollectionLayoutSettingsProps,
 } from '../MtCollection';
+import {
+  DndContext,
+  DragOverlay,
+  MeasuringStrategy,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+  type DragMoveEvent,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowUpDown, ChevronRight, Columns3, Layers3, ListFilter, Plus, X } from 'lucide-react';
 import React from 'react';
@@ -24,8 +38,20 @@ import { MtSortDropdown, MtSortRule } from '../../../MtSort';
 import { MtDropdown, MtDropdownItem } from '../../../MtDropdown';
 import { MtCollectionTaskListEntry } from '../MtCollectionTaskListEntry';
 import type { MtCollectionAssigneeOption } from '../MtCollectionEntryControls';
+import { useMtToast } from '../../../MtToast';
 
 const REQUIRED_VISIBLE_PROPERTY_IDS = ['summary'];
+
+/** Compute a position value for an entry being placed between two neighbors. */
+function computePositionBetween(aboveEntry: any | undefined, belowEntry: any | undefined): number {
+  const abovePos = typeof aboveEntry?.position === 'number' ? aboveEntry.position : 0;
+  const belowPos = typeof belowEntry?.position === 'number' ? belowEntry.position : 0;
+
+  if (!aboveEntry && !belowEntry) return 0;
+  if (!aboveEntry) return belowPos + 1;
+  if (!belowEntry) return abovePos - 1;
+  return (abovePos + belowPos) / 2;
+}
 
 function ensureRequiredVisibleProperties(propertyIds: string[]) {
   return Array.from(new Set([...propertyIds, ...REQUIRED_VISIBLE_PROPERTY_IDS]));
@@ -77,6 +103,11 @@ function MtCollectionListGroup({ label, count }: { label: string; count: number 
 
 /** Hard-coded entry height for virtualization. Custom entries must match this height. */
 const ENTRY_HEIGHT = 44;
+
+type DropTarget = {
+  entryId: string;
+  position: 'before' | 'after' | 'child';
+};
 
 type FlatRow =
   | { type: 'group'; key: string; label: string; count: number }
@@ -257,6 +288,93 @@ function includeAncestorEntries(
   return sortedEntries.filter((entry) => includedIds.has(String(entry?._id ?? entry?.id ?? '')));
 }
 
+function DropIndicatorLine({ position, indent = 0 }: { position: 'before' | 'after'; indent?: number }) {
+  return (
+    <div
+      className={`absolute right-0 h-0.5 bg-blue-500 pointer-events-none z-10 ${
+        position === 'before' ? 'top-0' : 'bottom-0'
+      }`}
+      style={{ left: indent > 0 ? `${indent}px` : 0 }}
+    >
+      {indent > 0 && (
+        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500" />
+      )}
+    </div>
+  );
+}
+
+function DraggableDroppableRow({
+  id,
+  top,
+  depth,
+  dropTarget,
+  activeDragId,
+  children,
+}: {
+  id: string;
+  top: number;
+  depth: number;
+  dropTarget: DropTarget | null;
+  activeDragId: string | null;
+  children: (dragHandleProps: {
+    ref: (element: HTMLElement | null) => void;
+    attributes: Record<string, unknown>;
+    listeners: Record<string, unknown>;
+  }) => React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    setActivatorNodeRef,
+    isDragging,
+  } = useDraggable({ id });
+  const { setNodeRef: setDropRef } = useDroppable({ id });
+
+  const nodeRef = React.useCallback(
+    (node: HTMLElement | null) => {
+      setDragRef(node);
+      setDropRef(node);
+    },
+    [setDragRef, setDropRef],
+  );
+
+  const isDropTarget = dropTarget?.entryId === id && activeDragId !== id;
+  const isDropBefore = isDropTarget && dropTarget.position === 'before';
+  const isDropAfter = isDropTarget && dropTarget.position === 'after';
+  const isDropChild = isDropTarget && dropTarget.position === 'child';
+
+  // Indent for the drop indicator: match entry depth, or go one level deeper for child drops
+  const indicatorIndent = isDropChild ? (depth + 1) * 20 + 16 : depth * 20 + 16;
+
+  return (
+    <div
+      ref={nodeRef}
+      className="absolute left-0 w-full"
+      style={{
+        top,
+        transition: isDragging ? 'none' : 'top 200ms ease, opacity 150ms ease',
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging ? -1 : undefined,
+      }}
+    >
+      {isDropBefore && <DropIndicatorLine position="before" indent={indicatorIndent} />}
+      <div
+        className={`transition-shadow duration-150 ${
+          isDropChild ? 'ring-2 ring-blue-500 ring-inset rounded-sm' : ''
+        }`}
+      >
+        {children({
+          ref: setActivatorNodeRef,
+          attributes: attributes as unknown as Record<string, unknown>,
+          listeners: listeners as unknown as Record<string, unknown>,
+        })}
+      </div>
+      {isDropAfter && <DropIndicatorLine position="after" indent={indicatorIndent} />}
+    </div>
+  );
+}
+
 export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
   const properties = React.useMemo(
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
@@ -279,6 +397,11 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
   );
   const [entryPatches, setEntryPatches] = React.useState<Record<string, Record<string, unknown>>>({});
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+  const [orderedEntryIds, setOrderedEntryIds] = React.useState<string[]>([]);
+  const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
+  const [dropTarget, setDropTarget] = React.useState<DropTarget | null>(null);
+  const dropTargetRef = React.useRef<DropTarget | null>(null);
+  const dragMoveRafRef = React.useRef<number | null>(null);
   const subtasksEnabled = Boolean(props.subtasksEnabled);
 
   const entryState = React.useMemo(
@@ -342,11 +465,47 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
       subtasksEnabled ? includeAncestorEntries(sortedEntries, entryState, sortRules, selectedSortBy) : sortedEntries,
     [entryState, selectedSortBy, sortRules, sortedEntries, subtasksEnabled],
   );
-  const rows = React.useMemo(
-    () => buildRows(entriesForRows, props.groupBy, subtasksEnabled, expandedIds),
-    [entriesForRows, props.groupBy, subtasksEnabled, expandedIds],
-  );
+  const hasSortRules = sortRules.length > 0;
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const toastCtx = useMtToast();
+  const prevHasSortRulesRef = React.useRef(hasSortRules);
 
+  React.useEffect(() => {
+    const currentIds = entriesForRows.map((entry) => String(entry?.id ?? ''));
+    const prevHadSortRules = prevHasSortRulesRef.current;
+    prevHasSortRulesRef.current = hasSortRules;
+
+    setOrderedEntryIds((previous) => {
+      // When sort rules are active, always follow the sort-determined order.
+      if (hasSortRules) {
+        return currentIds;
+      }
+      // When transitioning away from sort rules, re-initialize from position-sorted data
+      // instead of preserving the stale sort-rule order.
+      if (prevHadSortRules) {
+        return currentIds;
+      }
+      const preserved = previous.filter((id) => currentIds.includes(id));
+      const appended = currentIds.filter((id) => !preserved.includes(id));
+      return [...preserved, ...appended];
+    });
+  }, [entriesForRows, hasSortRules]);
+
+  const entryById = React.useMemo(
+    () => new Map(entriesForRows.map((entry) => [String(entry?.id ?? ''), entry])),
+    [entriesForRows],
+  );
+  const orderedEntriesForRows = React.useMemo(
+    () =>
+      orderedEntryIds
+        .map((id) => entryById.get(id))
+        .filter((entry): entry is any => Boolean(entry)),
+    [entryById, orderedEntryIds],
+  );
+  const rows = React.useMemo(
+    () => buildRows(orderedEntriesForRows, props.groupBy, subtasksEnabled, expandedIds),
+    [orderedEntriesForRows, props.groupBy, subtasksEnabled, expandedIds],
+  );
   const toggleExpanded = React.useCallback((convexId: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -377,6 +536,158 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     [props],
   );
 
+  const handleDragMove = React.useCallback(
+    (event: DragMoveEvent) => {
+      // Cancel any pending frame to avoid stacking updates
+      if (dragMoveRafRef.current !== null) {
+        cancelAnimationFrame(dragMoveRafRef.current);
+      }
+
+      dragMoveRafRef.current = requestAnimationFrame(() => {
+        dragMoveRafRef.current = null;
+        const { over, active } = event;
+        if (!over || String(over.id) === String(active.id)) {
+          if (dropTargetRef.current !== null) {
+            dropTargetRef.current = null;
+            setDropTarget(null);
+          }
+          return;
+        }
+
+        const overId = String(over.id);
+        const overRect = over.rect;
+
+        const activeTranslated = active.rect.current.translated;
+        if (!activeTranslated) {
+          return;
+        }
+        const activeCenterY = activeTranslated.top + activeTranslated.height / 2;
+        const fraction = Math.max(0, Math.min(1, (activeCenterY - overRect.top) / overRect.height));
+
+        let position: 'before' | 'after' | 'child';
+        if (subtasksEnabled) {
+          if (fraction < 0.25) position = 'before';
+          else if (fraction > 0.75) position = 'after';
+          else position = 'child';
+        } else {
+          position = fraction < 0.5 ? 'before' : 'after';
+        }
+
+        const prev = dropTargetRef.current;
+        if (prev?.entryId !== overId || prev?.position !== position) {
+          const newTarget: DropTarget = { entryId: overId, position };
+          dropTargetRef.current = newTarget;
+          setDropTarget(newTarget);
+        }
+      });
+    },
+    [subtasksEnabled],
+  );
+
+  const handleDragEnd = React.useCallback(
+    (event: DragEndEvent) => {
+      const activeId = String(event.active.id ?? '');
+      const target = dropTargetRef.current;
+
+      if (!target || !activeId || activeId === target.entryId) {
+        dropTargetRef.current = null;
+        setDropTarget(null);
+        return;
+      }
+
+      const { entryId: targetId, position } = target;
+
+      if (position === 'child' && subtasksEnabled) {
+        // Re-parent: make the dragged entry a child of the target
+        const activeEntry = entryById.get(activeId);
+        const targetEntry = entryById.get(targetId);
+        if (activeEntry && targetEntry) {
+          const targetConvexId = String(targetEntry._id ?? targetEntry.id ?? '');
+          applyEntryPatch(activeEntry, { parentId: targetConvexId });
+          // Expand the target so the moved subtask is visible
+          setExpandedIds((prev) => new Set([...prev, targetConvexId]));
+        }
+      } else {
+        // Block reordering when sort rules are active.
+        if (hasSortRules) {
+          toastCtx?.toast('Manual sorting is not available when a sort rule is applied');
+          dropTargetRef.current = null;
+          setDropTarget(null);
+          return;
+        }
+
+        // Build the new visual order with active entry moved to its target position.
+        const filtered = orderedEntryIds.filter((id) => id !== activeId);
+        const targetIndexInFiltered = filtered.indexOf(targetId);
+        const insertIndex = position === 'before' ? targetIndexInFiltered : targetIndexInFiltered + 1;
+        const newOrder = [...filtered];
+        newOrder.splice(insertIndex, 0, activeId);
+
+        // Check if any visible entry is missing an explicit position. When this is
+        // the case we need to batch-assign positions to ALL entries based on their
+        // current visual order before we can compute meaningful midpoints.
+        const needsBatch = newOrder.some((id) => {
+          const e = entryById.get(id);
+          return typeof e?.position !== 'number';
+        });
+
+        const activeEntry = entryById.get(activeId);
+
+        if (needsBatch) {
+          // Batch-assign: top entry gets highest position, bottom gets lowest.
+          const total = newOrder.length;
+          newOrder.forEach((id, idx) => {
+            const e = entryById.get(id);
+            if (e) {
+              applyEntryPatch(e, { position: (total - idx) * 1000 });
+            }
+          });
+        } else {
+          // All entries have positions – compute the midpoint for just the dragged entry.
+          const aboveId = insertIndex > 0 ? newOrder[insertIndex - 1] : undefined;
+          const belowId = insertIndex < newOrder.length - 1 ? newOrder[insertIndex + 1] : undefined;
+          const aboveEntry = aboveId ? entryById.get(aboveId) : undefined;
+          const belowEntry = belowId ? entryById.get(belowId) : undefined;
+          const newPosition = computePositionBetween(aboveEntry, belowEntry);
+          if (activeEntry) {
+            applyEntryPatch(activeEntry, { position: newPosition });
+          }
+        }
+
+        // Optimistic visual update
+        setOrderedEntryIds(newOrder);
+
+        // Handle group reassignment when dragging between groups
+        if (props.groupBy) {
+          const overEntry = entryById.get(targetId);
+          if (activeEntry && overEntry) {
+            const activeGroupValue = activeEntry?.[props.groupBy];
+            const overGroupValue = overEntry?.[props.groupBy];
+            if (activeGroupValue !== overGroupValue) {
+              applyEntryPatch(activeEntry, { [props.groupBy]: overGroupValue ?? null });
+            }
+          }
+        }
+
+        // If subtasks enabled, update parent to match target's parent
+        if (subtasksEnabled) {
+          const targetEntry = entryById.get(targetId);
+          if (activeEntry && targetEntry) {
+            const activeParentId = activeEntry?.parentId ? String(activeEntry.parentId) : null;
+            const targetParentId = targetEntry?.parentId ? String(targetEntry.parentId) : null;
+            if (activeParentId !== targetParentId) {
+              applyEntryPatch(activeEntry, { parentId: targetParentId });
+            }
+          }
+        }
+      }
+
+      dropTargetRef.current = null;
+      setDropTarget(null);
+    },
+    [applyEntryPatch, entryById, hasSortRules, orderedEntryIds, props.groupBy, subtasksEnabled, toastCtx],
+  );
+
   // TEMP, see: https://github.com/facebook/react/issues/33057
   // eslint-disable-next-line react-hooks/incompatible-library -- opted out of memoization via "use no memo"
   const virtualizer = useVirtualizer({
@@ -384,90 +695,224 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     getScrollElement: () => scrollRef.current,
     // WARN: This should be equal to the actual height of list entry, otherwise there will be
     // virtualization glitches. We should ideally measure the actual height of entry and return it here.
-    overscan: 5,
+    overscan: activeDragId ? 20 : 5,
     estimateSize: () => ENTRY_HEIGHT,
   });
 
+  const renderRowContent = React.useCallback(
+    (row: FlatRow) =>
+      row.type === 'group' ? (
+        <MtCollectionListGroup label={row.label} count={row.count} />
+      ) : row.type === 'add-subtask' ? (
+        <div
+          className="flex items-center border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
+          style={{ paddingLeft: `${row.depth * 20 + 16}px` }}
+        >
+          <button
+            type="button"
+            className="flex items-center gap-1 text-text-muted hover:text-text-primary transition-colors text-xs"
+            onClick={() => props.onAddSubtask?.(row.parentEntry)}
+          >
+            <Plus size={12} />
+            Add subtask
+          </button>
+        </div>
+      ) : EntryComponent ? (
+        <EntryComponent entry={row.entry} />
+      ) : (
+        <MtCollectionTaskListEntry
+          entry={row.entry}
+          properties={properties}
+          visiblePropertySet={visiblePropertySet}
+          statusOptions={statusOptions}
+          priorityOptions={priorityOptions}
+          issueTypeOptions={issueTypeOptions}
+          assigneeOptions={assigneeOptions}
+          depth={row.depth}
+          subtasksEnabled={subtasksEnabled}
+          hasSubtasks={row.hasSubtasks}
+          subtaskCount={row.subtaskCount}
+          isExpanded={row.isExpanded}
+          onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
+          onAddSubtask={() => props.onAddSubtask?.(row.entry)}
+          onSummaryChange={(nextSummary) => {
+            applyEntryPatch(row.entry, { summary: nextSummary });
+          }}
+          onPriorityChange={(nextPriority) => {
+            applyEntryPatch(row.entry, { priority: nextPriority });
+          }}
+          onStatusChange={(nextStatus) => {
+            applyEntryPatch(row.entry, { status: nextStatus, state: nextStatus });
+          }}
+          onIssueTypeChange={(nextType) => {
+            applyEntryPatch(row.entry, {
+              type: nextType,
+              entryType: nextType,
+              issueType: nextType,
+            });
+          }}
+          onPropertyChange={(propertyId, value) => {
+            applyEntryPatch(row.entry, { [propertyId]: value });
+          }}
+          onAssigneeChange={(nextAssignee) => {
+            applyEntryPatch(row.entry, { assignee: nextAssignee });
+          }}
+        />
+      ),
+    [
+      EntryComponent,
+      applyEntryPatch,
+      assigneeOptions,
+      issueTypeOptions,
+      priorityOptions,
+      properties,
+      props,
+      statusOptions,
+      subtasksEnabled,
+      toggleExpanded,
+      visiblePropertySet,
+    ],
+  );
+
   return (
-    <div id="scroll-container" ref={scrollRef} className="h-full min-h-0 overflow-y-auto">
-      {/* This div holds all the virtualized components */}
-      <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const row = rows[virtualRow.index];
+    <>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      measuring={{
+        droppable: { strategy: MeasuringStrategy.Always },
+      }}
+      onDragStart={(event) => {
+        setActiveDragId(String(event.active.id ?? ''));
+      }}
+      onDragMove={handleDragMove}
+      onDragCancel={() => {
+        setActiveDragId(null);
+        dropTargetRef.current = null;
+        setDropTarget(null);
+        if (dragMoveRafRef.current !== null) {
+          cancelAnimationFrame(dragMoveRafRef.current);
+          dragMoveRafRef.current = null;
+        }
+      }}
+      onDragEnd={(event) => {
+        handleDragEnd(event);
+        setActiveDragId(null);
+      }}
+      autoScroll
+    >
+      <div id="scroll-container" ref={scrollRef} className="h-full min-h-0 overflow-y-auto">
+        <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const row = rows[virtualRow.index];
 
-          if (!row) {
-            return null;
-          }
+            if (!row) {
+              return null;
+            }
 
-          return (
-            <div
-              key={row.key}
-              className="absolute top-0 left-0 w-full"
-              style={{ transform: `translateY(${virtualRow.start}px)` }}
-            >
-              {row.type === 'group' ? (
-                <MtCollectionListGroup label={row.label} count={row.count} />
-              ) : row.type === 'add-subtask' ? (
+            if (row.type !== 'entry') {
+              return (
                 <div
-                  className="flex items-center border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
-                  style={{ paddingLeft: `${row.depth * 20 + 16}px` }}
+                  key={row.key}
+                  className="absolute left-0 w-full"
+                  style={{ top: virtualRow.start, transition: 'top 200ms ease' }}
                 >
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 text-text-muted hover:text-text-primary transition-colors text-xs"
-                    onClick={() => props.onAddSubtask?.(row.parentEntry)}
-                  >
-                    <Plus size={12} />
-                    Add subtask
-                  </button>
+                  {renderRowContent(row)}
                 </div>
-              ) : EntryComponent ? (
-                <EntryComponent entry={row.entry} />
-              ) : (
-                <MtCollectionTaskListEntry
-                  entry={row.entry}
-                  properties={properties}
-                  visiblePropertySet={visiblePropertySet}
-                  statusOptions={statusOptions}
-                  priorityOptions={priorityOptions}
-                  issueTypeOptions={issueTypeOptions}
-                  assigneeOptions={assigneeOptions}
-                  depth={row.depth}
-                  subtasksEnabled={subtasksEnabled}
-                  hasSubtasks={row.hasSubtasks}
-                  subtaskCount={row.subtaskCount}
-                  isExpanded={row.isExpanded}
-                  onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
-                  onAddSubtask={() => props.onAddSubtask?.(row.entry)}
-                  onSummaryChange={(nextSummary) => {
-                    applyEntryPatch(row.entry, { summary: nextSummary });
-                  }}
-                  onPriorityChange={(nextPriority) => {
-                    applyEntryPatch(row.entry, { priority: nextPriority });
-                  }}
-                  onStatusChange={(nextStatus) => {
-                    applyEntryPatch(row.entry, { status: nextStatus, state: nextStatus });
-                  }}
-                  onIssueTypeChange={(nextType) => {
-                    applyEntryPatch(row.entry, {
-                      type: nextType,
-                      entryType: nextType,
-                      issueType: nextType,
-                    });
-                  }}
-                  onPropertyChange={(propertyId, value) => {
-                    applyEntryPatch(row.entry, { [propertyId]: value });
-                  }}
-                  onAssigneeChange={(nextAssignee) => {
-                    applyEntryPatch(row.entry, { assignee: nextAssignee });
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
+              );
+            }
+
+            const rowEntryId = String(row.entry?.id ?? '');
+
+            return (
+              <DraggableDroppableRow
+                key={row.key}
+                id={rowEntryId}
+                top={virtualRow.start}
+                depth={row.depth}
+                dropTarget={dropTarget}
+                activeDragId={activeDragId}
+              >
+                {(dragHandleProps) => {
+                  if (EntryComponent) {
+                    return <EntryComponent entry={row.entry} />;
+                  }
+
+                  return (
+                    <MtCollectionTaskListEntry
+                      entry={row.entry}
+                      properties={properties}
+                      visiblePropertySet={visiblePropertySet}
+                      statusOptions={statusOptions}
+                      priorityOptions={priorityOptions}
+                      issueTypeOptions={issueTypeOptions}
+                      assigneeOptions={assigneeOptions}
+                      depth={row.depth}
+                      subtasksEnabled={subtasksEnabled}
+                      hasSubtasks={row.hasSubtasks}
+                      subtaskCount={row.subtaskCount}
+                      isExpanded={row.isExpanded}
+                      dragHandleProps={dragHandleProps}
+                      onToggleExpand={() => toggleExpanded(String(row.entry._id ?? row.entry.id ?? ''))}
+                      onAddSubtask={() => props.onAddSubtask?.(row.entry)}
+                      onSummaryChange={(nextSummary) => {
+                        applyEntryPatch(row.entry, { summary: nextSummary });
+                      }}
+                      onPriorityChange={(nextPriority) => {
+                        applyEntryPatch(row.entry, { priority: nextPriority });
+                      }}
+                      onStatusChange={(nextStatus) => {
+                        applyEntryPatch(row.entry, { status: nextStatus, state: nextStatus });
+                      }}
+                      onIssueTypeChange={(nextType) => {
+                        applyEntryPatch(row.entry, {
+                          type: nextType,
+                          entryType: nextType,
+                          issueType: nextType,
+                        });
+                      }}
+                      onPropertyChange={(propertyId, value) => {
+                        applyEntryPatch(row.entry, { [propertyId]: value });
+                      }}
+                      onAssigneeChange={(nextAssignee) => {
+                        applyEntryPatch(row.entry, { assignee: nextAssignee });
+                      }}
+                    />
+                  );
+                }}
+              </DraggableDroppableRow>
+            );
+          })}
+        </div>
       </div>
-    </div>
+      <DragOverlay dropAnimation={{
+        duration: 200,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      }}>
+        {activeDragId
+          ? (() => {
+              const activeEntry = entryById.get(activeDragId);
+              if (!activeEntry) return null;
+              return (
+                <div className="opacity-90 pointer-events-none bg-[#141414] border border-[#2A2A2A] rounded shadow-lg">
+                  <MtCollectionTaskListEntry
+                    entry={activeEntry}
+                    properties={properties}
+                    visiblePropertySet={visiblePropertySet}
+                    statusOptions={statusOptions}
+                    priorityOptions={priorityOptions}
+                    issueTypeOptions={issueTypeOptions}
+                    assigneeOptions={assigneeOptions}
+                    depth={0}
+                    subtasksEnabled={false}
+                  />
+                </div>
+              );
+            })()
+          : null}
+      </DragOverlay>
+    </DndContext>
+    </>
   );
 };
 

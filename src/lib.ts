@@ -27,6 +27,7 @@ export { MtSortDropdown } from './components/matter/MtSort';
 export { default as MtStack } from './components/matter/MtStack';
 export { MtTextarea } from './components/matter/MtTextarea';
 export { MtToggletip } from './components/matter/MtToggletip';
+export { MtToastProvider, useMtToast } from './components/matter/MtToast';
 export { MtTooltip } from './components/matter/MtTooltip';
 export { MtTree } from './components/matter/MtTree';
 export type { MtTreeItem } from './components/matter/MtTree';

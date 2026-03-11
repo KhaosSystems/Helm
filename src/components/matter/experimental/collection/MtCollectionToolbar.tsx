@@ -7,6 +7,9 @@ import { MtDropdown, MtDropdownItem } from '../../MtDropdown';
 import { MtPopover } from '../../MtPopover';
 import { WithContextMenu } from '../../MtContextMenu';
 import { MtCollectionViewIcon } from './MtIconSelect';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
   const {
@@ -18,6 +21,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     onAddEntry,
     addView,
     deleteView,
+    reorderViews,
     openViewSettings,
     hasCurrentViewUnsavedChanges,
     saveCurrentViewAsDefault,
@@ -159,71 +163,49 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     });
   };
 
+  const viewIds = React.useMemo(() => views.map((view) => view.id), [views]);
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleViewDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = viewIds.indexOf(String(active.id));
+    const newIndex = viewIds.indexOf(String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(viewIds, oldIndex, newIndex);
+    void reorderViews(reordered);
+  };
+
   return (
     <div className="flex items-center border-b border-[#2A2A2A] h-11 px-4">
       {/** Views */}
       <div className="flex items-center gap-1.5">
-        {views.length > 0 &&
-          views.map((view) => (
-            <WithContextMenu
-              key={view.id}
-              getContextMenuItems={() => [
-                {
-                  label: 'Rename',
-                  onSelect: () => {
+        <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleViewDragEnd}>
+          <SortableContext items={viewIds} strategy={horizontalListSortingStrategy}>
+            {views.length > 0 &&
+              views.map((view) => (
+                <SortableViewTab
+                  key={view.id}
+                  view={view}
+                  isActive={view.id === currentView?.id}
+                  onSelect={() => setCurrentView(view)}
+                  onOpenMenu={() => {
+                    setCurrentView(view);
+                  }}
+                  onRename={() => {
                     setCurrentView(view);
                     openViewSettings('root', { focusViewNameEditor: true });
-                  },
-                },
-                {
-                  label: 'Edit view',
-                  onSelect: () => {
+                  }}
+                  onEdit={() => {
                     setCurrentView(view);
                     openViewSettings('root');
-                  },
-                },
-                { label: '', separator: true },
-                {
-                  label: 'Delete view',
-                  disabled: views.length <= 1,
-                  onSelect: () => {
-                    deleteView(view.id);
-                  },
-                },
-                {
-                  label: 'Duplicate view',
-                  onSelect: () => duplicateView(view.id),
-                },
-                {
-                  label: 'Copy link to view',
-                  disabled: true,
-                },
-              ]}
-            >
-              {({ openMenu }) => (
-                <MtButton
-                  variant="ghost"
-                  selected={view.id === currentView?.id}
-                  className="h-auto min-h-0 items-center gap-2 border border-transparent px-2 py-1 text-sm text-text-muted hover:text-text-primary data-[selected]:border-[#8D8D8D] data-[selected]:text-text-primary"
-                  onClick={(event) => {
-                    if (view.id === currentView?.id) {
-                      openMenu(event);
-                      return;
-                    }
-
-                    setCurrentView(view);
                   }}
-                  onContextMenu={(event) => {
-                    setCurrentView(view);
-                    openMenu(event);
-                  }}
-                >
-                  <MtCollectionViewIcon iconId={view.icon} layoutName={view.layout?.name} />
-                  <span>{view.name}</span>
-                </MtButton>
-              )}
-            </WithContextMenu>
-          ))}
+                  onDelete={views.length > 1 ? () => deleteView(view.id) : undefined}
+                  onDuplicate={() => duplicateView(view.id)}
+                />
+              ))}
+          </SortableContext>
+        </DndContext>
         {views.length === 0 ? <span className="text-sm text-text-muted">No views</span> : null}
         <div className="border-r border-[#2A2A2A] h-6"></div>
         <MtPopover
@@ -411,5 +393,77 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
         </MtButton>
       </div>
     </div>
+  );
+}
+
+/** Sortable view tab — wraps a single view button with drag-and-drop via dnd-kit. */
+function SortableViewTab({
+  view,
+  isActive,
+  onSelect,
+  onOpenMenu,
+  onRename,
+  onEdit,
+  onDelete,
+  onDuplicate,
+}: {
+  view: { id: string; name: string; icon?: string; layout?: unknown };
+  isActive: boolean;
+  onSelect: () => void;
+  onOpenMenu: (event: React.MouseEvent) => void;
+  onRename: () => void;
+  onEdit: () => void;
+  onDelete?: () => void;
+  onDuplicate: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: view.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  };
+
+  const layoutName = view.layout && typeof view.layout === 'object' && 'name' in view.layout
+    ? (view.layout as { name?: string }).name
+    : undefined;
+
+  return (
+    <WithContextMenu
+      getContextMenuItems={() => [
+        { label: 'Rename', onSelect: onRename },
+        { label: 'Edit view', onSelect: onEdit },
+        { label: '', separator: true },
+        { label: 'Delete view', disabled: !onDelete, onSelect: () => onDelete?.() },
+        { label: 'Duplicate view', onSelect: onDuplicate },
+        { label: 'Copy link to view', disabled: true },
+      ]}
+    >
+      {({ openMenu }) => (
+        <MtButton
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          variant="ghost"
+          selected={isActive}
+          className="h-auto min-h-0 items-center gap-2 border border-transparent px-2 py-1 text-sm text-text-muted hover:text-text-primary data-[selected]:border-[#8D8D8D] data-[selected]:text-text-primary"
+          onClick={(event) => {
+            if (isActive) {
+              openMenu(event);
+              return;
+            }
+            onSelect();
+          }}
+          onContextMenu={(event) => {
+            onOpenMenu(event);
+            openMenu(event);
+          }}
+        >
+          <MtCollectionViewIcon iconId={view.icon} layoutName={layoutName} />
+          <span>{view.name}</span>
+        </MtButton>
+      )}
+    </WithContextMenu>
   );
 }

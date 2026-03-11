@@ -1,17 +1,24 @@
 import React from 'react';
 import { MtCollectionLayoutComponent } from '../MtCollection';
 import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  useDroppable,
+} from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
   applyCollectionFilters,
   applyCollectionQuickFilters,
   applyCollectionSort,
+  getUniqueEntryValues,
   type MtCollectionFilterState,
   type MtCollectionQuickFilterState,
 } from '../MtCollectionEntryUtils';
 import type { MtSortRule } from '../../../MtSort';
-import { MtCollectionBoardCard } from './MtCollectionBoardLayout';
-import {
-  getUniqueEntryValues,
-} from '../MtCollectionEntryUtils';
+import { MtCollectionBoardCard, SortableBoardCard } from './MtCollectionBoardLayout';
+import { useBoardDnd } from './useBoardDnd';
+import { useMtToast } from '../../../MtToast';
 import type { MtCollectionAssigneeOption } from '../MtCollectionEntryControls';
 
 const REQUIRED_VISIBLE_PROPERTY_IDS = ['summary'];
@@ -30,6 +37,37 @@ type PlanColumn = {
   weekStartMs?: number;
   weekEndMs?: number;
 };
+
+function PlanDroppableColumn({
+  column,
+  entryIds,
+  totalEstimate,
+  children,
+}: {
+  column: PlanColumn;
+  entryIds: string[];
+  totalEstimate: number;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ minHeight: `${Math.max(180, 52 + entryIds.length * 56)}px` }}
+      className={`w-72 shrink-0 rounded border bg-[#111111] transition-all duration-150 ease-out ${isOver ? 'border-border-default scale-[1.01]' : 'border-[#2A2A2A] scale-100'}`}
+    >
+      <div className="flex items-center justify-between border-b border-[#2A2A2A] px-3 py-2">
+        <div className="text-sm text-text-primary">{column.label}</div>
+        <div className="text-xs text-text-muted">{totalEstimate}</div>
+      </div>
+
+      <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>
+        <div className="flex max-h-[calc(100vh-16rem)] flex-col gap-2 overflow-auto p-2">{children}</div>
+      </SortableContext>
+    </div>
+  );
+}
 
 function startOfIsoWeek(input: Date) {
   const date = new Date(input);
@@ -74,8 +112,7 @@ function getEntryTimeEstimate(entry: any) {
 }
 
 export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
-  const [entryState, setEntryState] = React.useState(props.entries);
-  const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  const [entryPatches, setEntryPatches] = React.useState<Record<string, Record<string, unknown>>>({});
   const properties = React.useMemo(
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
     [props.properties],
@@ -103,6 +140,15 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
     [props.viewSettings?.visiblePropertyIds, properties],
   );
   const visiblePropertySet = React.useMemo(() => new Set(visiblePropertyIds), [visiblePropertyIds]);
+  const entryState = React.useMemo(
+    () =>
+      props.entries.map((entry) => {
+        const entryId = String(entry?.id ?? '');
+        const patch = entryPatches[entryId];
+        return patch ? { ...entry, ...patch } : entry;
+      }),
+    [props.entries, entryPatches],
+  );
   const assigneeOptions = React.useMemo<MtCollectionAssigneeOption[]>(() => {
     if (props.assigneeOptions && props.assigneeOptions.length > 0) {
       return props.assigneeOptions;
@@ -130,10 +176,6 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
     () => (props.viewSettings?.quickFilters as MtCollectionQuickFilterState | undefined) ?? {},
     [props.viewSettings?.quickFilters],
   );
-
-  React.useEffect(() => {
-    setEntryState(props.entries);
-  }, [props.entries]);
 
   const filteredEntries = React.useMemo(
     () => applyCollectionFilters(entryState, filterState),
@@ -194,97 +236,85 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
     return map;
   }, [columns, sortedEntries]);
 
-  const updateEntry = React.useCallback(
-    (entryId: string, patch: Record<string, unknown>) => {
-      setEntryState((previousEntries) =>
-        previousEntries.map((entry) =>
-          String(entry?.id) === entryId
-            ? {
-                ...entry,
-                ...patch,
-              }
-            : entry,
-        ),
-      );
-    },
-    [],
-  );
-
   const applyEntryPatch = React.useCallback(
     (entry: any, patch: Record<string, unknown>) => {
-      updateEntry(String(entry?.id ?? ''), patch);
+      const entryId = String(entry?.id ?? '');
+      setEntryPatches((previousPatches) => ({
+        ...previousPatches,
+        [entryId]: {
+          ...(previousPatches[entryId] ?? {}),
+          ...patch,
+        },
+      }));
       if (props.onUpdateEntry) {
         void props.onUpdateEntry(entry, patch as any);
       }
     },
-    [props.onUpdateEntry, updateEntry],
+    [props.onUpdateEntry],
   );
 
+  const handleCrossColumnMove = React.useCallback(
+    (_activeId: string, movedEntry: any, _sourceColumnKey: string, _destColumnKey: string, destColumn: PlanColumn) => {
+      const patch =
+        destColumn.weekStartMs !== undefined && destColumn.weekEndMs !== undefined
+          ? { startDate: destColumn.weekStartMs, dueDate: destColumn.weekEndMs }
+          : { startDate: undefined, dueDate: undefined };
+      applyEntryPatch(movedEntry, patch);
+    },
+    [applyEntryPatch],
+  );
+
+  const handlePositionChange = React.useCallback(
+    (_activeId: string, entry: any, newPosition: number) => {
+      applyEntryPatch(entry, { position: newPosition });
+    },
+    [applyEntryPatch],
+  );
+
+  const hasSortRules = sortRules.length > 0;
+  const toastCtx = useMtToast();
+
+  const { activeDragId, entryById, orderedColumns, sensors, onDragStart, onDragOver, onDragEnd, onDragCancel } =
+    useBoardDnd<PlanColumn>({
+      columns,
+      entriesByColumn,
+      onCrossColumnMove: handleCrossColumnMove,
+      onPositionChange: handlePositionChange,
+      disableSameColumnReorder: hasSortRules,
+      onReorderBlocked: () => {
+        toastCtx?.toast('Manual sorting is not available when a sort rule is applied');
+      },
+    });
+
   return (
-    <div className="h-full min-h-0 overflow-auto p-3">
-      <div className="flex min-w-max gap-3">
-        {columns.map((column) => {
-          const columnEntries = entriesByColumn.get(column.key) ?? [];
-          const totalEstimate = columnEntries.reduce((sum, entry) => sum + getEntryTimeEstimate(entry), 0);
+    <>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragCancel={onDragCancel}
+      onDragEnd={onDragEnd}
+      autoScroll
+    >
+      <div className="h-full min-h-0 overflow-auto p-3">
+        <div className="flex min-w-max gap-3">
+          {orderedColumns.map(({ column, entryIds }) => {
+            const totalEstimate = entryIds.reduce((sum, id) => sum + getEntryTimeEstimate(entryById.get(id)), 0);
 
-          return (
-            <div
-              key={column.key}
-              className="w-72 shrink-0 rounded border border-[#2A2A2A] bg-[#111111]"
-              onDragOver={(event) => {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = 'move';
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                const movedId = event.dataTransfer.getData('text/plain') || draggingId;
-                if (!movedId) {
-                  return;
-                }
+            return (
+              <PlanDroppableColumn key={column.key} column={column} entryIds={entryIds} totalEstimate={totalEstimate}>
+                {entryIds.map((entryId) => {
+                  const entry = entryById.get(entryId);
+                  if (!entry) {
+                    return null;
+                  }
 
-                const movedEntry = entryState.find((entry) => String(entry?.id) === movedId);
-                if (!movedEntry) {
-                  setDraggingId(null);
-                  return;
-                }
-
-                const patch =
-                  column.weekStartMs !== undefined && column.weekEndMs !== undefined
-                    ? {
-                        startDate: column.weekStartMs,
-                        dueDate: column.weekEndMs,
-                      }
-                    : {
-                        startDate: undefined,
-                        dueDate: undefined,
-                      };
-
-                applyEntryPatch(movedEntry, patch);
-                setDraggingId(null);
-              }}
-            >
-              <div className="flex items-center justify-between border-b border-[#2A2A2A] px-3 py-2">
-                <div className="text-sm text-text-primary">{column.label}</div>
-                <div className="text-xs text-text-muted">{totalEstimate}</div>
-              </div>
-
-              <div className="flex max-h-[calc(100vh-16rem)] flex-col gap-2 overflow-auto p-2">
-                {columnEntries.map((entry) => {
-                  const entryId = String(entry?.id ?? '');
                   return (
-                    <div
-                      key={entryId}
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.effectAllowed = 'move';
-                        event.dataTransfer.setData('text/plain', entryId);
-                        setDraggingId(entryId);
-                      }}
-                      onDragEnd={() => setDraggingId(null)}
-                      className="cursor-grab active:cursor-grabbing"
-                    >
+                    <SortableBoardCard key={entryId} id={entryId}>
                       <MtCollectionBoardCard
                         entry={entry}
+                        isDragPreview={false}
                         visiblePropertySet={visiblePropertySet}
                         statusOptions={statusOptions}
                         priorityOptions={priorityOptions}
@@ -319,14 +349,48 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
                           applyEntryPatch(entry, { assignee: nextAssignee });
                         }}
                       />
-                    </div>
+                    </SortableBoardCard>
                   );
                 })}
-              </div>
-            </div>
-          );
-        })}
+              </PlanDroppableColumn>
+            );
+          })}
+        </div>
       </div>
-    </div>
+      <DragOverlay>
+        {activeDragId ? (
+          <div className="w-72 opacity-95 pointer-events-none shadow-lg">
+            {(() => {
+              const activeEntry = entryById.get(activeDragId);
+              if (!activeEntry) {
+                return null;
+              }
+
+              return (
+                <MtCollectionBoardCard
+                  entry={activeEntry}
+                  isDragPreview={false}
+                  visiblePropertySet={visiblePropertySet}
+                  statusOptions={statusOptions}
+                  priorityOptions={priorityOptions}
+                  issueTypeOptions={issueTypeOptions}
+                  assigneeOptions={assigneeOptions}
+                  parentDisplayId={
+                    activeEntry?.parentId
+                      ? String(
+                          entryByConvexId.get(String(activeEntry.parentId))?.id ??
+                            entryByConvexId.get(String(activeEntry.parentId))?._id ??
+                            activeEntry.parentId,
+                        )
+                      : undefined
+                  }
+                />
+              );
+            })()}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+    </>
   );
 };

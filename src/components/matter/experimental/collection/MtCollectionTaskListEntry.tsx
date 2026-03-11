@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { GripVertical, Plus } from 'lucide-react';
 import MtAvatar from '../../MtAvatar';
 import { MtButton } from '../../MtButton';
 import { MtCheckbox } from '../../MtCheckbox';
@@ -59,6 +59,11 @@ type MtCollectionTaskListEntryProps = {
   onToggleExpand?: () => void;
   /** Add a subtask under this entry. */
   onAddSubtask?: () => void;
+  dragHandleProps?: {
+    ref?: (element: HTMLElement | null) => void;
+    attributes?: Record<string, unknown>;
+    listeners?: Record<string, unknown>;
+  };
 };
 
 export function MtCollectionTaskListEntry({
@@ -82,6 +87,7 @@ export function MtCollectionTaskListEntry({
   isExpanded = false,
   onToggleExpand,
   onAddSubtask,
+  dragHandleProps,
 }: MtCollectionTaskListEntryProps) {
   const displayId = entry?.id ? String(entry.id) : '';
   // Use the Convex _id as canonical id for selection; fall back to id.
@@ -101,6 +107,7 @@ export function MtCollectionTaskListEntry({
   const [statusState, setStatusState] = React.useState(status);
   const [entryTypeState, setEntryTypeState] = React.useState(entryType);
   const [assigneeState, setAssigneeState] = React.useState(assignee || undefined);
+  const [isLeftEdgeHovered, setIsLeftEdgeHovered] = React.useState(false);
 
   React.useEffect(() => {
     setSummaryState(summary);
@@ -176,8 +183,22 @@ export function MtCollectionTaskListEntry({
 
   return (
     <div
-      className="group flex items-center gap-2 px-4 border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
+      className="group relative flex items-center gap-2 px-4 border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
       style={{ paddingLeft: depth > 0 ? `${depth * 20 + 16}px` : undefined }}
+      onMouseMove={(event) => {
+        if (!dragHandleProps) {
+          return;
+        }
+
+        const bounds = event.currentTarget.getBoundingClientRect();
+        const withinLeftZone = event.clientX - bounds.left <= 28;
+        setIsLeftEdgeHovered((previous) => (previous === withinLeftZone ? previous : withinLeftZone));
+      }}
+      onMouseLeave={() => {
+        if (dragHandleProps) {
+          setIsLeftEdgeHovered(false);
+        }
+      }}
     >
       <div
         role="checkbox"
@@ -187,17 +208,31 @@ export function MtCollectionTaskListEntry({
         onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && entrySelectionId && toggleSelected(entrySelectionId)}
         className={`shrink-0 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity cursor-pointer`}
       >
-        <MtCheckbox checked={isSelected} />
+        <MtCheckbox checked={isSelected} readOnly />
       </div>
+
+      {dragHandleProps ? (
+        <button
+          type="button"
+          ref={dragHandleProps.ref}
+          className={`absolute left-1 shrink-0 text-text-muted hover:text-text-primary cursor-grab active:cursor-grabbing transition-opacity ${isLeftEdgeHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          aria-label="Drag to reorder"
+          tabIndex={isLeftEdgeHovered ? 0 : -1}
+          {...(dragHandleProps.attributes as any)}
+          {...(dragHandleProps.listeners as any)}
+        >
+          <GripVertical size={14} />
+        </button>
+      ) : null}
 
       {subtasksEnabled ? (
         <button
           type="button"
           onClick={onToggleExpand}
-          className={`shrink-0 flex items-center justify-center w-4 h-4 text-text-muted hover:text-text-primary transition-opacity ${hasSubtasks ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          className="shrink-0 flex items-center justify-center w-4 h-4 text-text-muted hover:text-text-primary transition-opacity opacity-0 group-hover:opacity-100 data-[has-subtasks=true]:opacity-100"
+          data-has-subtasks={hasSubtasks || undefined}
           tabIndex={-1}
           aria-label={isExpanded ? 'Collapse subtasks' : 'Expand subtasks'}
-          disabled={!hasSubtasks}
         >
           <MtTriangleCaret expanded={isExpanded} />
         </button>
