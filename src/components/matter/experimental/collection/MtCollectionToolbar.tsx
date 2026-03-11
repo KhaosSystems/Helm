@@ -1,11 +1,11 @@
 import { Circle, CircleCheckBig, DiamondPlus, Search, Settings, Users, X } from 'lucide-react';
 import React from 'react';
 import { MtButton } from '../../MtButton';
+import MtAvatar from '../../MtAvatar';
 import { useMtCollection } from './MtCollectionContext';
 import { MtDropdown, MtDropdownItem } from '../../MtDropdown';
 import { MtPopover } from '../../MtPopover';
 import { WithContextMenu } from '../../MtContextMenu';
-import type { MtCollectionQuickFilterState } from './MtCollectionEntryUtils';
 import { MtCollectionViewIcon } from './MtIconSelect';
 
 export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
@@ -22,6 +22,11 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     hasCurrentViewUnsavedChanges,
     saveCurrentViewAsDefault,
     revertCurrentViewToDefault,
+    quickFilters,
+    setQuickFilters,
+    transientQuickFilters,
+    setTransientQuickFilters,
+    currentUserQuickFilter,
   } = useMtCollection /*<T>*/();
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [isAddViewOpen, setIsAddViewOpen] = React.useState(false);
@@ -59,9 +64,6 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     context.setShowViewSettings(!context.showViewSettings);
   };
 
-  const viewSettings = currentView?.settings ?? {};
-  const quickFilters = (viewSettings.quickFilters as MtCollectionQuickFilterState | undefined) ?? {};
-
   const getStatusValue = (entry: unknown) => {
     if (!entry || typeof entry !== 'object') {
       return '';
@@ -96,27 +98,13 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     return '';
   };
 
-  const setQuickFilters = (patch: Partial<MtCollectionQuickFilterState>) => {
-    if (!currentView) {
-      return;
-    }
-
-    setCurrentView({
-      ...currentView,
-      settings: {
-        ...(currentView.settings ?? {}),
-        quickFilters: {
-          ...quickFilters,
-          ...patch,
-        },
-      },
-    });
-  };
-
   const statusOptions = Array.from(new Set(entries.map((entry) => getStatusValue(entry)).filter(Boolean))).sort();
   const assigneeOptions = Array.from(new Set(entries.map((entry) => getAssigneeValue(entry)).filter(Boolean))).sort();
   const hasQuickStatusFilter = (quickFilters.status?.length ?? 0) > 0;
   const hasQuickAssigneeFilter = (quickFilters.assignee?.length ?? 0) > 0;
+  const hasCurrentUserQuickFilter = Boolean(
+    currentUserQuickFilter && transientQuickFilters.requiredAssignee === currentUserQuickFilter.assignee,
+  );
 
   React.useEffect(() => {
     if (!templateLayoutName || !availableLayouts.some((layout) => layout.id === templateLayoutName)) {
@@ -308,6 +296,26 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
 
         {LayoutToolbarActions ? <LayoutToolbarActions /> : null}
         <div className="border-r border-[#2A2A2A] h-6"></div>
+
+        {currentUserQuickFilter ? (
+          <MtButton
+            kind="icon"
+            variant={hasCurrentUserQuickFilter ? 'accent' : 'ghost'}
+            title={`Filter to ${currentUserQuickFilter.label}`}
+            onClick={() =>
+              setTransientQuickFilters({
+                requiredAssignee: hasCurrentUserQuickFilter ? undefined : currentUserQuickFilter.assignee,
+              })
+            }
+          >
+            <MtAvatar
+              size="xs"
+              src={currentUserQuickFilter.avatarSrc}
+              name={currentUserQuickFilter.label}
+              className="pointer-events-none"
+            />
+          </MtButton>
+        ) : null}
 
         <div className="flex items-center gap-1">
           <MtDropdown

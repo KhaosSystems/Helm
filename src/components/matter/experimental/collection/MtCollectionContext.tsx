@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { MtCollectionEntry, MtCollectionProperty, MtCollectionView } from './MtCollection'; // or your types location
+import type { MtCollectionQuickFilterState } from './MtCollectionEntryUtils';
 
 /**
  * Context props for MtCollection.
@@ -28,6 +29,15 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   hasCurrentViewUnsavedChanges: boolean;
   saveCurrentViewAsDefault: () => void | Promise<void>;
   revertCurrentViewToDefault: () => void;
+  quickFilters: MtCollectionQuickFilterState;
+  setQuickFilters: (patch: Partial<MtCollectionQuickFilterState>) => void;
+  transientQuickFilters: MtCollectionQuickFilterState;
+  setTransientQuickFilters: (patch: Partial<MtCollectionQuickFilterState>) => void;
+  currentUserQuickFilter?: {
+    assignee: string;
+    label: string;
+    avatarSrc?: string;
+  };
   /** Set of selected entry IDs. */
   selectedIds: Set<string>;
   /** Toggle selection for a single entry by its id. */

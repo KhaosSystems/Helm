@@ -204,6 +204,48 @@ function buildRows(
   return rows;
 }
 
+function includeAncestorEntries(
+  visibleEntries: any[],
+  allEntries: any[],
+  sortRules: MtSortRule[] | undefined,
+  fallbackSortBy: string,
+) {
+  if (visibleEntries.length === 0 || allEntries.length === 0) {
+    return visibleEntries;
+  }
+
+  const entryById = new Map(allEntries.map((entry) => [String(entry?._id ?? entry?.id ?? ''), entry]));
+  const includedIds = new Set<string>();
+
+  const includeEntry = (entry: any) => {
+    const entryId = String(entry?._id ?? entry?.id ?? '');
+    if (entryId) {
+      includedIds.add(entryId);
+    }
+  };
+
+  visibleEntries.forEach((entry) => {
+    includeEntry(entry);
+
+    const visitedParentIds = new Set<string>();
+    let parentId = entry?.parentId ? String(entry.parentId) : '';
+
+    while (parentId && !visitedParentIds.has(parentId)) {
+      visitedParentIds.add(parentId);
+      const parentEntry = entryById.get(parentId);
+      if (!parentEntry) {
+        break;
+      }
+
+      includeEntry(parentEntry);
+      parentId = parentEntry?.parentId ? String(parentEntry.parentId) : '';
+    }
+  });
+
+  const sortedEntries = applyCollectionSort(allEntries, sortRules, fallbackSortBy);
+  return sortedEntries.filter((entry) => includedIds.has(String(entry?._id ?? entry?.id ?? '')));
+}
+
 export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
   const properties = React.useMemo(
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
@@ -284,9 +326,14 @@ export const MtCollectionListLayout: MtCollectionLayoutComponent = (props) => {
     () => applyCollectionSort(toolbarFilteredEntries, sortRules, selectedSortBy),
     [toolbarFilteredEntries, sortRules, selectedSortBy],
   );
+  const entriesForRows = React.useMemo(
+    () =>
+      subtasksEnabled ? includeAncestorEntries(sortedEntries, entryState, sortRules, selectedSortBy) : sortedEntries,
+    [entryState, selectedSortBy, sortRules, sortedEntries, subtasksEnabled],
+  );
   const rows = React.useMemo(
-    () => buildRows(sortedEntries, props.groupBy, subtasksEnabled, expandedIds),
-    [sortedEntries, props.groupBy, subtasksEnabled, expandedIds],
+    () => buildRows(entriesForRows, props.groupBy, subtasksEnabled, expandedIds),
+    [entriesForRows, props.groupBy, subtasksEnabled, expandedIds],
   );
 
   const toggleExpanded = React.useCallback((convexId: string) => {

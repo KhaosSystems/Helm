@@ -11,6 +11,7 @@ type MtCollectionLegacyFilterState = {
 export type MtCollectionQuickFilterState = {
   status?: string[];
   assignee?: string[];
+  requiredAssignee?: string;
   search?: string;
 };
 
@@ -302,11 +303,12 @@ export function applyCollectionQuickFilters(entries: any[], quickFilters: MtColl
 
   const statusFilters = quickFilters.status ?? [];
   const assigneeFilters = quickFilters.assignee ?? [];
+  const requiredAssignee = String(quickFilters.requiredAssignee ?? '');
   const search = String(quickFilters.search ?? '')
     .trim()
     .toLowerCase();
 
-  if (statusFilters.length === 0 && assigneeFilters.length === 0 && !search) {
+  if (statusFilters.length === 0 && assigneeFilters.length === 0 && !requiredAssignee && !search) {
     return entries;
   }
 
@@ -319,6 +321,10 @@ export function applyCollectionQuickFilters(entries: any[], quickFilters: MtColl
     }
 
     if (assigneeFilters.length > 0 && !assigneeFilters.includes(assigneeValue)) {
+      return false;
+    }
+
+    if (requiredAssignee && assigneeValue !== requiredAssignee) {
       return false;
     }
 

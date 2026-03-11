@@ -20,6 +20,7 @@ import { MtCollectionContext } from './MtCollectionContext';
 import { MtCollectionViewSettings } from './MtCollectionViewSettings';
 import { MtCollectionSelectionToolbar } from './MtCollectionSelectionToolbar';
 import type { MtCollectionAssigneeOption } from './MtCollectionEntryControls';
+import type { MtCollectionQuickFilterState } from './MtCollectionEntryUtils';
 
 /**
  * Minimal interface for an item represented in the collection.
@@ -153,6 +154,11 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   viewSettings?: ReactNode;
   className?: string;
   assigneeOptions?: MtCollectionAssigneeOption[];
+  currentUserQuickFilter?: {
+    assignee: string;
+    label: string;
+    avatarSrc?: string;
+  };
   onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
   onAddEntry?: () => void | Promise<void>;
   /** When true, subtask expand/collapse and add-subtask controls are shown. */
@@ -181,6 +187,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   viewSettings = <MtCollectionViewSettings />,
   className,
   assigneeOptions,
+  currentUserQuickFilter,
   onUpdateEntry,
   onAddEntry,
   subtasksEnabled,
@@ -196,6 +203,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   const [focusViewNameEditor, setFocusViewNameEditor] = useState(false);
   const [currentViewId, setCurrentViewId] = useState<string | null>(views[0]?.id ?? null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [transientQuickFilters, setTransientQuickFiltersState] = useState<MtCollectionQuickFilterState>({});
   const [defaultViewState, setDefaultViewState] = useState<Record<string, MtCollectionViewDefaultSnapshot>>(
     Object.fromEntries(views.map((view) => [view.id, buildViewDefaultSnapshot(view)])),
   );
@@ -213,6 +221,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   }, [properties]);
 
   const currentView = viewState.find((view) => view.id === currentViewId) ?? null;
+  const currentViewQuickFilters =
+    ((currentView?.settings?.quickFilters as MtCollectionQuickFilterState | undefined) ?? {}) satisfies MtCollectionQuickFilterState;
 
   const setCurrentView = (nextView: MtCollectionView<T> | null) => {
     if (!nextView) {
@@ -361,6 +371,33 @@ export function MtCollection<T extends MtCollectionEntry>({
     });
   };
 
+  const setQuickFilters = useCallback(
+    (patch: Partial<MtCollectionQuickFilterState>) => {
+      if (!currentView) {
+        return;
+      }
+
+      setCurrentView({
+        ...currentView,
+        settings: {
+          ...(currentView.settings ?? {}),
+          quickFilters: {
+            ...currentViewQuickFilters,
+            ...patch,
+          },
+        },
+      });
+    },
+    [currentView, currentViewQuickFilters],
+  );
+
+  const setTransientQuickFilters = useCallback((patch: Partial<MtCollectionQuickFilterState>) => {
+    setTransientQuickFiltersState((previousFilters) => ({
+      ...previousFilters,
+      ...patch,
+    }));
+  }, []);
+
   const toggleSelected = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -388,6 +425,10 @@ export function MtCollection<T extends MtCollectionEntry>({
   const currentViewSettings: MtCollectionViewSettingsState = {
     visiblePropertyIds: currentView?.settings?.visiblePropertyIds ?? getDefaultVisiblePropertyIds(),
     ...(currentView?.settings ?? {}),
+    quickFilters: {
+      ...currentViewQuickFilters,
+      ...transientQuickFilters,
+    },
   };
 
   const isViewSettingsOpen = Boolean(showViewSettingsState && currentView && viewSettings);
@@ -407,6 +448,11 @@ export function MtCollection<T extends MtCollectionEntry>({
         hasCurrentViewUnsavedChanges,
         saveCurrentViewAsDefault,
         revertCurrentViewToDefault,
+        quickFilters: currentViewQuickFilters,
+        setQuickFilters,
+        transientQuickFilters,
+        setTransientQuickFilters,
+        currentUserQuickFilter,
         showViewSettings: showViewSettingsState,
         setShowViewSettings: setShowViewSettingsState,
         viewSettingsPageId,
