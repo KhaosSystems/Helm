@@ -1,12 +1,16 @@
 import React from 'react';
-import { MtCollectionLayoutComponent } from '../MtCollection';
+import { MtCollectionLayoutComponent, MtCollectionLayoutSettingsProps } from '../MtCollection';
 import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { ArrowUpDown, ChevronRight, ListFilter, X } from 'lucide-react';
 import {
   applyCollectionFilters,
   applyCollectionQuickFilters,
   applyCollectionSort,
+  getCollectionFilterRuleCount,
+  getDefaultCollectionFilter,
   getUniqueEntryValues,
+  isCollectionFilterActive,
   type MtCollectionFilterState,
   type MtCollectionQuickFilterState,
 } from '../MtCollectionEntryUtils';
@@ -15,6 +19,11 @@ import { MtCollectionBoardCard, SortableBoardCard } from './MtCollectionBoardLay
 import { useBoardDnd } from './useBoardDnd';
 import { useMtToast } from '../../../MtToast';
 import type { MtCollectionAssigneeOption } from '../MtCollectionEntryControls';
+import { MtDrawerMenuItem, MtDrawerMenuPage, MtDrawerMenuSection } from '../MtCollectionViewSettings';
+import { MtFilterDropdown } from '../../../MtFilter';
+import { MtSortDropdown } from '../../../MtSort';
+import { useMtCollection } from '../MtCollectionContext';
+import { MtButton } from '../../../MtButton';
 
 const REQUIRED_VISIBLE_PROPERTY_IDS = ['summary'];
 
@@ -389,3 +398,206 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
     </>
   );
 };
+
+function MtCollectionPlanLayoutSettingsMenu({
+  currentView,
+  viewSettings,
+  setViewSettings,
+  setCurrentView,
+}: MtCollectionLayoutSettingsProps<any>) {
+  const filterState = (viewSettings.filter ?? {}) as MtCollectionFilterState;
+  const activeFilterCount = getCollectionFilterRuleCount(filterState);
+  const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
+  const sortFields = [
+    { value: 'updated', label: 'Updated' },
+    { value: 'priority', label: 'Priority' },
+    { value: 'status', label: 'Status' },
+    { value: 'assignee', label: 'Assignee' },
+    { value: 'summary', label: 'Summary' },
+  ];
+
+  const selectedSortLabel =
+    sortRules.length > 0
+      ? (sortFields.find((field) => field.value === sortRules[0].property)?.label ?? sortRules[0].property)
+      : 'None';
+
+  const filterFields = [
+    { value: 'summary', label: 'Summary' },
+    { value: 'status', label: 'Status' },
+    { value: 'priority', label: 'Priority' },
+    { value: 'assignee', label: 'Assignee' },
+    { value: 'id', label: 'ID' },
+  ];
+  const filterOperators = [
+    { value: 'is', label: 'is', requiresValue: true },
+    { value: 'is_not', label: 'is not', requiresValue: true },
+    { value: 'contains', label: 'contains', requiresValue: true },
+    { value: 'is_empty', label: 'is empty', requiresValue: false },
+    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
+  ];
+  const currentFilterValue =
+    'type' in filterState && filterState.type === 'group' ? filterState : getDefaultCollectionFilter();
+
+  return (
+    <>
+      <MtDrawerMenuSection title="View options">
+        <MtDrawerMenuItem
+          icon={<ListFilter size={14} />}
+          label="Filter"
+          submenu="filter"
+          trailing={
+            <>
+              {activeFilterCount > 0 ? `${activeFilterCount} active` : 'None'}
+              <ChevronRight size={14} />
+            </>
+          }
+        />
+        <MtDrawerMenuItem
+          icon={<ArrowUpDown size={14} />}
+          label="Sort"
+          submenu="sort"
+          trailing={
+            <>
+              {selectedSortLabel}
+              <ChevronRight size={14} />
+            </>
+          }
+        />
+      </MtDrawerMenuSection>
+
+      <MtDrawerMenuPage id="filter" title="Filter">
+        <MtDrawerMenuSection>
+          <div className="px-2">
+            <MtFilterDropdown
+              title="Filter"
+              value={currentFilterValue}
+              onChange={(nextFilter) => {
+                setCurrentView({
+                  ...currentView,
+                  settings: {
+                    ...(currentView.settings ?? {}),
+                    filter: nextFilter,
+                  },
+                });
+              }}
+              fields={filterFields}
+              operators={filterOperators}
+              variant="ghost"
+            />
+          </div>
+        </MtDrawerMenuSection>
+      </MtDrawerMenuPage>
+
+      <MtDrawerMenuPage id="sort" title="Sort">
+        <MtDrawerMenuSection>
+          <div className="px-2">
+            <MtSortDropdown
+              title="Sort"
+              value={sortRules}
+              onChange={(nextSortRules) => {
+                setViewSettings({ sortRules: nextSortRules });
+              }}
+              fields={sortFields}
+              variant="ghost"
+            />
+          </div>
+        </MtDrawerMenuSection>
+      </MtDrawerMenuPage>
+    </>
+  );
+}
+
+MtCollectionPlanLayout.SettingsMenu = MtCollectionPlanLayoutSettingsMenu;
+
+function MtCollectionPlanLayoutToolbarActions() {
+  const context = useMtCollection();
+  const currentView = context.currentView;
+
+  if (!currentView) {
+    return null;
+  }
+
+  const viewSettings = currentView.settings ?? {};
+  const sortRules = (viewSettings.sortRules as MtSortRule[] | undefined) ?? [];
+  const filterFields = [
+    { value: 'summary', label: 'Summary' },
+    { value: 'status', label: 'Status' },
+    { value: 'priority', label: 'Priority' },
+    { value: 'assignee', label: 'Assignee' },
+    { value: 'id', label: 'ID' },
+  ];
+  const filterOperators = [
+    { value: 'is', label: 'is', requiresValue: true },
+    { value: 'is_not', label: 'is not', requiresValue: true },
+    { value: 'contains', label: 'contains', requiresValue: true },
+    { value: 'is_empty', label: 'is empty', requiresValue: false },
+    { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
+  ];
+  const sortFields = [
+    { value: 'updated', label: 'Updated' },
+    { value: 'priority', label: 'Priority' },
+    { value: 'status', label: 'Status' },
+    { value: 'assignee', label: 'Assignee' },
+    { value: 'summary', label: 'Summary' },
+  ];
+  const currentFilter =
+    viewSettings.filter &&
+    typeof viewSettings.filter === 'object' &&
+    'type' in (viewSettings.filter as Record<string, unknown>)
+      ? (viewSettings.filter as any)
+      : getDefaultCollectionFilter();
+  const hasSort = sortRules.length > 0;
+  const hasFilter = isCollectionFilterActive(viewSettings.filter as MtCollectionFilterState | undefined);
+
+  const setCurrentView = context.setCurrentView;
+  const setViewSettings = (settings: Partial<Record<string, unknown>>) => {
+    setCurrentView({
+      ...currentView,
+      settings: {
+        ...(currentView.settings ?? {}),
+        ...settings,
+      },
+    });
+  };
+
+  return (
+    <>
+      <div className="flex items-center gap-1">
+        <MtSortDropdown
+          title="Sort"
+          kind="icon"
+          variant={hasSort ? 'accent' : 'ghost'}
+          showCaret={false}
+          value={sortRules}
+          onChange={(nextSortRules) => setViewSettings({ sortRules: nextSortRules })}
+          fields={sortFields}
+        />
+        {hasSort ? (
+          <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ sortRules: [] })}>
+            <X size={14} stroke="#8D8D8D" />
+          </MtButton>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-1">
+        <MtFilterDropdown
+          title="Filter"
+          kind="icon"
+          variant={hasFilter ? 'accent' : 'ghost'}
+          showCaret={false}
+          value={currentFilter}
+          onChange={(nextFilter) => setViewSettings({ filter: nextFilter })}
+          fields={filterFields}
+          operators={filterOperators}
+        />
+        {hasFilter ? (
+          <MtButton kind="icon" variant="ghost" onClick={() => setViewSettings({ filter: undefined })}>
+            <X size={14} stroke="#8D8D8D" />
+          </MtButton>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+MtCollectionPlanLayout.ToolbarActions = MtCollectionPlanLayoutToolbarActions;
