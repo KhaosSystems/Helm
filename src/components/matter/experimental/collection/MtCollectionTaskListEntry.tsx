@@ -188,7 +188,7 @@ export function MtCollectionTaskListEntry({
         <MtCollectionSummaryInput
           value={summaryState}
           autoWidth
-          minAutoWidthPx={88}
+          minAutoWidthPx={10}
           className="w-auto px-0"
           onChange={(nextSummary) => {
             setSummaryState(nextSummary);
