@@ -47,6 +47,8 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   clearSelection: () => void;
   /** Callback to delete selected entries (no confirmation). Only present when consumer provides it. */
   onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
+  /** Callback invoked when an entry is clicked (e.g. to navigate to detail). */
+  onEntryClick?: (entry: T) => void;
 }
 
 export const MtCollectionContext = createContext<MtCollectionContextProps<any> | null>(null);

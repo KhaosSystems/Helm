@@ -33,6 +33,9 @@ export function MtDialog({
           style={{ maxWidth }}
           className={`mt-surface-dialog fixed left-1/2 top-1/2 z-50 w-[92vw] max-h-[86vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65)] focus:outline-none ${className || ''} ${contentClassName || ''}`}
         >
+          {!title && <Dialog.Title className="sr-only">Dialog</Dialog.Title>}
+          {!description && <Dialog.Description className="sr-only">Dialog content</Dialog.Description>}
+
           {(title || description || showCloseButton) && (
             <div className="mb-5 flex items-center gap-3 border-b pb-4">
               {(title || description) && (

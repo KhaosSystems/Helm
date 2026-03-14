@@ -4,7 +4,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { useBoardDnd } from './useBoardDnd';
 import { useMtToast } from '../../../MtToast';
-import { ArrowUpDown, ChevronRight, Columns3, CornerLeftUp, Layers3, ListFilter, X } from 'lucide-react';
+import { AlignLeft, ArrowUpDown, ChevronRight, Columns3, CornerLeftUp, Layers3, ListFilter, MessageSquare, Pencil, X } from 'lucide-react';
 import { MtDrawerMenuItem, MtDrawerMenuPage, MtDrawerMenuSection } from '../MtCollectionViewSettings';
 import { useMtCollection } from '../MtCollectionContext';
 import React from 'react';
@@ -29,7 +29,6 @@ import type { MtCollectionFilterState, MtCollectionQuickFilterState } from '../M
 import {
   MtCollectionAssigneeDropdown,
   type MtCollectionAssigneeOption,
-  MtCollectionSummaryInput,
   MtIssueTypeSelect,
   MtPrioirtySelect,
   MtStateSelect,
@@ -71,6 +70,7 @@ export function MtCollectionBoardCard({
   onStatusChange,
   onIssueTypeChange,
   onAssigneeChange,
+  onClick,
   isDragPreview,
   visiblePropertySet,
   parentDisplayId,
@@ -85,6 +85,7 @@ export function MtCollectionBoardCard({
   onStatusChange?: (nextStatus: string) => void;
   onIssueTypeChange?: (nextType: string) => void;
   onAssigneeChange?: (nextAssignee?: string) => void;
+  onClick?: () => void;
   isDragPreview?: boolean;
   visiblePropertySet: Set<string>;
   parentDisplayId?: string;
@@ -99,6 +100,8 @@ export function MtCollectionBoardCard({
   const assignee = getCollectionEntryAssignee(entry);
   const summary = getCollectionEntrySummary(entry);
   const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? '').toLowerCase();
+  const commentCount = typeof entry?.commentCount === 'number' ? entry.commentCount : 0;
+  const hasDescription = !!(entry?.descriptionPageId || entry?.description);
   const showSummary = visiblePropertySet.has('summary');
   const showId = visiblePropertySet.has('id');
   const showStatus = visiblePropertySet.has('status') || visiblePropertySet.has('state');
@@ -108,8 +111,28 @@ export function MtCollectionBoardCard({
   const showAssignee = visiblePropertySet.has('assignee');
   const showMetaRow = showId || showIssueType || showStatus || showPriority || showAssignee;
 
+  const [isRenaming, setIsRenaming] = React.useState(false);
+  const [renameValue, setRenameValue] = React.useState(summary);
+  const renameInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setRenameValue(summary);
+  }, [summary]);
+
+  React.useEffect(() => {
+    if (isRenaming) renameInputRef.current?.focus();
+  }, [isRenaming]);
+
+  const commitRename = React.useCallback(() => {
+    setIsRenaming(false);
+    if (renameValue !== summary) onSummaryChange?.(renameValue);
+  }, [renameValue, summary, onSummaryChange]);
+
   return (
-    <div className="rounded border border-[#2A2A2A] bg-[#141414] p-3 text-sm">
+    <div
+      className="rounded border border-[#2A2A2A] bg-[#141414] p-3 text-sm cursor-pointer hover:border-[#3A3A3A] transition-colors"
+      onClick={onClick}
+    >
       {parentDisplayId ? (
         <div className="flex items-center gap-1 text-text-muted text-xs mb-1.5">
           <CornerLeftUp size={11} />
@@ -117,15 +140,36 @@ export function MtCollectionBoardCard({
         </div>
       ) : null}
       {showSummary ? (
-        isDragPreview ? (
-          <div className="px-1 py-0.5 text-sm text-text-primary truncate">{summary || 'Untitled'}</div>
+        isRenaming ? (
+          <input
+            ref={renameInputRef}
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') { setRenameValue(summary); setIsRenaming(false); }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-border-focus"
+          />
         ) : (
-          <MtCollectionSummaryInput value={summary} onChange={onSummaryChange ?? (() => undefined)} />
+          <div className="group/summary flex items-center gap-1 px-1 py-0.5 min-w-0">
+            <span className="text-sm text-text-primary truncate">{summary || 'Untitled'}</span>
+            <button
+              type="button"
+              className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover/summary:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); setIsRenaming(true); }}
+              aria-label="Rename"
+            >
+              <Pencil size={11} />
+            </button>
+          </div>
         )
       ) : null}
 
       {showMetaRow ? (
-        <div className="flex row justify-between items-center px-1">
+        <div className="flex row justify-between items-center px-1" onClick={(e) => e.stopPropagation()}>
           <div className="flex row gap-2 items-center min-w-0">
             {showIssueType ? (
               isDragPreview ? (
@@ -139,9 +183,7 @@ export function MtCollectionBoardCard({
               )
             ) : null}
             {showId ? (
-              <>
-                <div className="text-xs text-text-primary">{displayId}</div>
-              </>
+              <span className="text-xs text-text-muted">{displayId}</span>
             ) : null}
             {showStatus ? (
               isDragPreview ? (
@@ -152,6 +194,17 @@ export function MtCollectionBoardCard({
             ) : null}
           </div>
           <div className="flex items-center gap-2 text-xs text-text-primary">
+            {hasDescription ? (
+              <span className="flex items-center text-text-muted" title="Has description">
+                <AlignLeft size={11} />
+              </span>
+            ) : null}
+            {commentCount > 0 ? (
+              <span className="flex items-center gap-0.5 text-text-muted" title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
+                <MessageSquare size={11} />
+                <span className="text-[10px]">{commentCount}</span>
+              </span>
+            ) : null}
             {showPriority ? (
               isDragPreview ? (
                 <div className="text-xs text-text-muted truncate">{priority || '—'}</div>
@@ -234,7 +287,15 @@ type BoardColumn = {
   entries: any[];
 };
 
-export function SortableBoardCard({ id, children }: { id: string; children: React.ReactNode }) {
+export function SortableBoardCard({
+  id,
+  children,
+  onClick,
+}: {
+  id: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: transform ? CSS.Transform.toString(transform) : undefined,
@@ -247,6 +308,7 @@ export function SortableBoardCard({ id, children }: { id: string; children: Reac
       style={style}
       {...attributes}
       {...listeners}
+      onClick={onClick}
       className={`cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-40 z-10' : ''}`}
     >
       {children}
@@ -291,6 +353,7 @@ export const BoardDroppableColumn = DroppableColumn;
 
 export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
   const EntryComponent = props.renderEntry;
+  const { onEntryClick } = useMtCollection();
   const properties = React.useMemo(
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
     [props.properties],
@@ -455,7 +518,11 @@ export const MtCollectionBoardLayout: MtCollectionLayoutComponent = (props) => {
                   }
 
                   return (
-                    <SortableBoardCard key={entryId} id={entryId}>
+                    <SortableBoardCard
+                      key={entryId}
+                      id={entryId}
+                      onClick={onEntryClick ? () => onEntryClick(entry) : undefined}
+                    >
                       {EntryComponent ? (
                         <EntryComponent entry={entry} />
                       ) : (

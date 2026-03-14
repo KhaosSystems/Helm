@@ -79,7 +79,7 @@ function getDiscreteValueStrings(values: Array<string | MtCollectionDiscreteValu
 
 function MtCollectionListGroup({ label, count }: { label: string; count: number }) {
   return (
-    <div className="flex items-center justify-between px-6 border-b border-border-default h-11 bg-[#111111] text-sm">
+    <div className="flex items-center justify-between px-6 border-b border-border-default h-[44px] bg-[#111111] text-sm">
       <span className="text-text-primary">{label}</span>
       <span className="text-text-muted">{count}</span>
     </div>

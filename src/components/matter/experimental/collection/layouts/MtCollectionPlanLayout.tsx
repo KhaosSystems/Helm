@@ -87,6 +87,7 @@ function getEntryTimeEstimate(entry: any) {
 }
 
 export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
+  const { onEntryClick } = useMtCollection();
   const [entryPatches, setEntryPatches] = React.useState<Record<string, Record<string, unknown>>>({});
   const properties = React.useMemo(
     () => (props.properties && props.properties.length > 0 ? props.properties : [{ id: 'id', label: 'ID' }]),
@@ -292,7 +293,11 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
                     }
 
                     return (
-                      <SortableBoardCard key={entryId} id={entryId}>
+                      <SortableBoardCard
+                        key={entryId}
+                        id={entryId}
+                        onClick={onEntryClick ? () => onEntryClick(entry) : undefined}
+                      >
                         <MtCollectionBoardCard
                           entry={entry}
                           isDragPreview={false}

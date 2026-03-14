@@ -1,5 +1,5 @@
 import React from 'react';
-import { GripVertical, Plus } from 'lucide-react';
+import { AlignLeft, GripVertical, MessageSquare, Pencil, Plus } from 'lucide-react';
 import MtAvatar from '../../MtAvatar';
 import { MtButton } from '../../MtButton';
 import { MtCheckbox } from '../../MtCheckbox';
@@ -7,7 +7,6 @@ import { MtSubgraphIcon } from '../../MtIcon';
 import {
   MtCollectionAssigneeDropdown,
   MtCollectionAssigneeOption,
-  MtCollectionSummaryInput,
   MtIssueTypeSelect,
   MtPrioirtySelect,
   MtStateSelect,
@@ -98,8 +97,10 @@ export function MtCollectionTaskListEntry({
   const assignee = entry?.assignee ? String(entry.assignee) : '';
   const summary = entry?.summary ? String(entry.summary) : '';
   const entryType = String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? '').toLowerCase();
+  const commentCount = typeof entry?.commentCount === 'number' ? entry.commentCount : 0;
+  const hasDescription = !!(entry?.descriptionPageId || entry?.description);
 
-  const { selectedIds, toggleSelected } = useMtCollection();
+  const { selectedIds, toggleSelected, onEntryClick } = useMtCollection();
   const isSelected = entrySelectionId ? selectedIds.has(entrySelectionId) : false;
 
   const [summaryState, setSummaryState] = React.useState(summary);
@@ -108,6 +109,10 @@ export function MtCollectionTaskListEntry({
   const [entryTypeState, setEntryTypeState] = React.useState(entryType);
   const [assigneeState, setAssigneeState] = React.useState(assignee || undefined);
   const [isLeftEdgeHovered, setIsLeftEdgeHovered] = React.useState(false);
+  const [isRenaming, setIsRenaming] = React.useState(false);
+  const [renameValue, setRenameValue] = React.useState(summary);
+  const renameInputRef = React.useRef<HTMLInputElement>(null);
+  const rowRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setSummaryState(summary);
@@ -115,7 +120,25 @@ export function MtCollectionTaskListEntry({
     setStatusState(status);
     setEntryTypeState(entryType);
     setAssigneeState(assignee || undefined);
+    setRenameValue(summary);
   }, [summary, priority, status, entryType, assignee]);
+
+  React.useEffect(() => {
+    if (isRenaming) renameInputRef.current?.focus();
+  }, [isRenaming]);
+
+  const commitRename = React.useCallback(() => {
+    setIsRenaming(false);
+    if (renameValue !== summary) {
+      setSummaryState(renameValue);
+      onSummaryChange?.(renameValue);
+    }
+  }, [renameValue, summary, onSummaryChange]);
+
+  const startRename = React.useCallback(() => {
+    setRenameValue(summaryState);
+    setIsRenaming(true);
+  }, [summaryState]);
 
   const showId = visiblePropertySet.has('id');
   const showName = visiblePropertySet.has('name') || visiblePropertySet.has('title');
@@ -183,8 +206,11 @@ export function MtCollectionTaskListEntry({
 
   return (
     <div
-      className="group relative flex items-center gap-2 px-4 border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm"
+      ref={rowRef}
+      className="group relative flex items-center gap-2 px-4 border-b border-[#2A2A2A] h-[44px] bg-[#141414] text-sm cursor-pointer hover:bg-[#1a1a1a] transition-colors"
       style={{ paddingLeft: depth > 0 ? `${depth * 20 + 16}px` : undefined }}
+      tabIndex={0}
+      onClick={() => onEntryClick?.(entry)}
       onMouseMove={(event) => {
         if (!dragHandleProps) {
           return;
@@ -203,8 +229,8 @@ export function MtCollectionTaskListEntry({
       <div
         role="checkbox"
         aria-checked={isSelected}
-        tabIndex={0}
-        onClick={() => entrySelectionId && toggleSelected(entrySelectionId)}
+        tabIndex={-1}
+        onClick={(e) => { e.stopPropagation(); entrySelectionId && toggleSelected(entrySelectionId); }}
         onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && entrySelectionId && toggleSelected(entrySelectionId)}
         className={`shrink-0 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity cursor-pointer`}
       >
@@ -228,7 +254,7 @@ export function MtCollectionTaskListEntry({
       {subtasksEnabled ? (
         <button
           type="button"
-          onClick={onToggleExpand}
+          onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
           className="shrink-0 flex items-center justify-center w-4 h-4 text-text-muted hover:text-text-primary transition-opacity opacity-0 group-hover:opacity-100 data-[has-subtasks=true]:opacity-100"
           data-has-subtasks={hasSubtasks || undefined}
           tabIndex={-1}
@@ -239,62 +265,84 @@ export function MtCollectionTaskListEntry({
       ) : null}
 
       {showPriority ? (
-        <MtPrioirtySelect
-          value={priorityState}
-          options={priorityOptions}
-          onChange={(nextPriority) => {
-            setPriorityState(nextPriority);
-            onPriorityChange?.(nextPriority);
-          }}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <MtPrioirtySelect
+            value={priorityState}
+            options={priorityOptions}
+            onChange={(nextPriority) => {
+              setPriorityState(nextPriority);
+              onPriorityChange?.(nextPriority);
+            }}
+          />
+        </div>
       ) : null}
 
       {showIssueType ? (
-        <MtIssueTypeSelect
-          value={entryTypeState}
-          options={issueTypeOptions}
-          onChange={(nextType) => {
-            setEntryTypeState(nextType);
-            onIssueTypeChange?.(nextType);
-          }}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <MtIssueTypeSelect
+            value={entryTypeState}
+            options={issueTypeOptions}
+            onChange={(nextType) => {
+              setEntryTypeState(nextType);
+              onIssueTypeChange?.(nextType);
+            }}
+          />
+        </div>
       ) : null}
 
       {showId ? (
         <div className="flex items-center gap-1 text-text-primary min-w-0">
-          <span className="truncate">{displayId}</span>
+          <span className="truncate text-text-muted text-xs">{displayId}</span>
         </div>
       ) : null}
 
       {showStatus ? (
-        <MtStateSelect
-          value={statusState}
-          options={statusOptions}
-          onChange={(nextStatus) => {
-            setStatusState(nextStatus);
-            onStatusChange?.(nextStatus);
-          }}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <MtStateSelect
+            value={statusState}
+            options={statusOptions}
+            onChange={(nextStatus) => {
+              setStatusState(nextStatus);
+              onStatusChange?.(nextStatus);
+            }}
+          />
+        </div>
       ) : null}
 
       {showName ? <span className="text-text-primary truncate max-w-40">{name || '—'}</span> : null}
 
-      <div className="min-w-0">
-        <MtCollectionSummaryInput
-          value={summaryState}
-          autoWidth
-          minAutoWidthPx={10}
-          className="w-auto px-0"
-          onChange={(nextSummary) => {
-            setSummaryState(nextSummary);
-            onSummaryChange?.(nextSummary);
-          }}
-        />
+      <div className="min-w-0" onClick={(e) => e.stopPropagation()}>
+        {isRenaming ? (
+          <input
+            ref={renameInputRef}
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') { setRenameValue(summary); setIsRenaming(false); }
+              e.stopPropagation();
+            }}
+            className="w-full rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-border-focus"
+          />
+        ) : (
+          <div className="group/summary flex items-center gap-1 min-w-0">
+            <span className="text-sm text-text-primary truncate">{summaryState || 'Untitled'}</span>
+            <button
+              type="button"
+              className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover/summary:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); startRename(); }}
+              aria-label="Rename"
+            >
+              <Pencil size={11} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {subtasksEnabled ? (
-        <div className="flex items-center gap-1 shrink-0">
-          {hasSubtasks ? (
+      {subtasksEnabled || hasDescription || commentCount > 0 ? (
+        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {subtasksEnabled && hasSubtasks ? (
             <MtButton
               variant="ghost"
               className="shrink-0 px-2 text-text-muted hover:text-text-primary"
@@ -306,20 +354,35 @@ export function MtCollectionTaskListEntry({
             </MtButton>
           ) : null}
 
-          <MtButton
-            kind="icon"
-            variant="ghost"
-            className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover:opacity-100"
-            onClick={onAddSubtask}
-            aria-label="Add subtask"
-          >
-            <Plus size={12} />
-          </MtButton>
+          {hasDescription ? (
+            <span className="mx-1 flex items-center text-text-muted shrink-0" title="Has description">
+              <AlignLeft size={12} />
+            </span>
+          ) : null}
+
+          {commentCount > 0 ? (
+            <span className="mx-1 flex items-center gap-0.5 text-text-muted shrink-0" title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
+              <MessageSquare size={12} />
+              <span className="text-[10px]">{commentCount}</span>
+            </span>
+          ) : null}
+
+            {subtasksEnabled ? (
+            <MtButton
+              kind="icon"
+              variant="ghost"
+              className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover:opacity-100"
+              onClick={onAddSubtask}
+              aria-label="Add subtask"
+            >
+              <Plus size={12} />
+            </MtButton>
+          ) : null}
         </div>
       ) : null}
 
       {trailingProperties.length > 0 || showAssignee ? (
-        <div className="ml-auto flex items-center gap-2 shrink-0">
+        <div className="ml-auto flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           {trailingProperties.map((property: { id: string; label: string }) => {
             const isDateProperty = property.id === 'startDate' || property.id === 'dueDate';
             const isTimeEstimateProperty = property.id === 'timeEstimate';

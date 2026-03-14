@@ -173,6 +173,8 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
   /** Persist a reordered list of view IDs. */
   onReorderViews?: (viewIds: string[]) => void | Promise<void>;
+  /** Callback invoked when an entry is clicked (e.g. to navigate to detail). */
+  onEntryClick?: (entry: T) => void;
 }
 
 /**
@@ -198,6 +200,7 @@ export function MtCollection<T extends MtCollectionEntry>({
   onDeleteView,
   onDeleteEntries,
   onReorderViews,
+  onEntryClick,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -478,6 +481,7 @@ export function MtCollection<T extends MtCollectionEntry>({
         toggleSelected,
         clearSelection,
         onDeleteEntries,
+        onEntryClick,
       }}
     >
       <div
