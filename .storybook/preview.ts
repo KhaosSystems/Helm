@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import theme from './matter-theme';
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
 
 import '../src/index.css';
 
@@ -21,6 +22,9 @@ const preview: Preview = {
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
       test: 'todo',
+    },
+    performance: {
+      panel: addonPerformancePanel,
     },
   },
 };
