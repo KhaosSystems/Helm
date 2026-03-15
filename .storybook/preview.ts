@@ -1,6 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import theme from './matter-theme';
-import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel';
 
 import '../src/index.css';
 

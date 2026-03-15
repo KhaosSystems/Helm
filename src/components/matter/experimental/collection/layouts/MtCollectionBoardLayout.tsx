@@ -4,7 +4,18 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { useBoardDnd } from './useBoardDnd';
 import { useMtToast } from '../../../MtToast';
-import { AlignLeft, ArrowUpDown, ChevronRight, Columns3, CornerLeftUp, Layers3, ListFilter, MessageSquare, Pencil, X } from 'lucide-react';
+import {
+  AlignLeft,
+  ArrowUpDown,
+  ChevronRight,
+  Columns3,
+  CornerLeftUp,
+  Layers3,
+  ListFilter,
+  MessageSquare,
+  Pencil,
+  X,
+} from 'lucide-react';
 import { MtDrawerMenuItem, MtDrawerMenuPage, MtDrawerMenuSection } from '../MtCollectionViewSettings';
 import { useMtCollection } from '../MtCollectionContext';
 import React from 'react';
@@ -148,7 +159,10 @@ export function MtCollectionBoardCard({
             onBlur={commitRename}
             onKeyDown={(e) => {
               if (e.key === 'Enter') commitRename();
-              if (e.key === 'Escape') { setRenameValue(summary); setIsRenaming(false); }
+              if (e.key === 'Escape') {
+                setRenameValue(summary);
+                setIsRenaming(false);
+              }
             }}
             onClick={(e) => e.stopPropagation()}
             className="w-full rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-border-focus"
@@ -159,7 +173,10 @@ export function MtCollectionBoardCard({
             <button
               type="button"
               className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover/summary:opacity-100 transition-opacity"
-              onClick={(e) => { e.stopPropagation(); setIsRenaming(true); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsRenaming(true);
+              }}
               aria-label="Rename"
             >
               <Pencil size={11} />
@@ -182,9 +199,7 @@ export function MtCollectionBoardCard({
                 />
               )
             ) : null}
-            {showId ? (
-              <span className="text-xs text-text-muted">{displayId}</span>
-            ) : null}
+            {showId ? <span className="text-xs text-text-muted">{displayId}</span> : null}
             {showStatus ? (
               isDragPreview ? (
                 <div className="text-xs text-text-muted truncate">{status || '—'}</div>
@@ -200,7 +215,10 @@ export function MtCollectionBoardCard({
               </span>
             ) : null}
             {commentCount > 0 ? (
-              <span className="flex items-center gap-0.5 text-text-muted" title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
+              <span
+                className="flex items-center gap-0.5 text-text-muted"
+                title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
+              >
                 <MessageSquare size={11} />
                 <span className="text-[10px]">{commentCount}</span>
               </span>

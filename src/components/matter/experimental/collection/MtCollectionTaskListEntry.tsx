@@ -230,7 +230,10 @@ export function MtCollectionTaskListEntry({
         role="checkbox"
         aria-checked={isSelected}
         tabIndex={-1}
-        onClick={(e) => { e.stopPropagation(); entrySelectionId && toggleSelected(entrySelectionId); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          entrySelectionId && toggleSelected(entrySelectionId);
+        }}
         onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && entrySelectionId && toggleSelected(entrySelectionId)}
         className={`shrink-0 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity cursor-pointer`}
       >
@@ -254,7 +257,10 @@ export function MtCollectionTaskListEntry({
       {subtasksEnabled ? (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand?.();
+          }}
           className="shrink-0 flex items-center justify-center w-4 h-4 text-text-muted hover:text-text-primary transition-opacity opacity-0 group-hover:opacity-100 data-[has-subtasks=true]:opacity-100"
           data-has-subtasks={hasSubtasks || undefined}
           tabIndex={-1}
@@ -320,7 +326,10 @@ export function MtCollectionTaskListEntry({
             onBlur={commitRename}
             onKeyDown={(e) => {
               if (e.key === 'Enter') commitRename();
-              if (e.key === 'Escape') { setRenameValue(summary); setIsRenaming(false); }
+              if (e.key === 'Escape') {
+                setRenameValue(summary);
+                setIsRenaming(false);
+              }
               e.stopPropagation();
             }}
             className="w-full rounded border border-[#2A2A2A] bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-border-focus"
@@ -331,7 +340,10 @@ export function MtCollectionTaskListEntry({
             <button
               type="button"
               className="shrink-0 text-text-muted hover:text-text-primary opacity-0 group-hover/summary:opacity-100 transition-opacity"
-              onClick={(e) => { e.stopPropagation(); startRename(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                startRename();
+              }}
               aria-label="Rename"
             >
               <Pencil size={11} />
@@ -361,13 +373,16 @@ export function MtCollectionTaskListEntry({
           ) : null}
 
           {commentCount > 0 ? (
-            <span className="mx-1 flex items-center gap-0.5 text-text-muted shrink-0" title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
+            <span
+              className="mx-1 flex items-center gap-0.5 text-text-muted shrink-0"
+              title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
+            >
               <MessageSquare size={12} />
               <span className="text-[10px]">{commentCount}</span>
             </span>
           ) : null}
 
-            {subtasksEnabled ? (
+          {subtasksEnabled ? (
             <MtButton
               kind="icon"
               variant="ghost"
