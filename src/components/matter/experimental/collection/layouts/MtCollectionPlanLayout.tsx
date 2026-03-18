@@ -42,6 +42,7 @@ type PlanColumn = {
   label: string;
   weekStartMs?: number;
   weekEndMs?: number;
+  isCurrentWeek?: boolean;
 };
 
 function startOfIsoWeek(input: Date) {
@@ -177,6 +178,7 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
         label: `Week ${weekNumber}`,
         weekStartMs: weekStart.getTime(),
         weekEndMs: weekEnd.getTime(),
+        isCurrentWeek: offset === 0,
       };
     });
 
@@ -282,7 +284,16 @@ export const MtCollectionPlanLayout: MtCollectionLayoutComponent = (props) => {
                 <DroppableColumn
                   key={column.key}
                   columnKey={column.key}
-                  label={column.label}
+                  label={
+                    <span className="inline-flex items-center gap-1.5">
+                      <span>{column.label}</span>
+                      {column.isCurrentWeek ? (
+                        <span className="rounded bg-[#1A2A1F] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#82D29A]">
+                          Current Week
+                        </span>
+                      ) : null}
+                    </span>
+                  }
                   trailing={totalEstimate}
                   entryIds={entryIds}
                 >

@@ -342,7 +342,7 @@ export function DroppableColumn({
   children,
 }: {
   columnKey: string;
-  label: string;
+  label: React.ReactNode;
   trailing?: React.ReactNode;
   entryIds: string[];
   children: React.ReactNode;
