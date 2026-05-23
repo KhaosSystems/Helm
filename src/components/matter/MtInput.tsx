@@ -2,7 +2,7 @@ import { forwardRef, InputHTMLAttributes } from 'react';
 
 interface MtInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'variant'> {
   size?: 'medium' | 'large';
-  variant?: 'default' | 'ghost';
+  variant?: 'default' | 'ghost' | 'panel';
   placeholder?: string;
 }
 
@@ -16,10 +16,11 @@ export const MtInput = forwardRef<HTMLInputElement, MtInputProps>(({ size, varia
     large: 'mt-layout-input-large',
   };
 
-  const actualvariant = variant || 'default';
+  const actualVariant = variant || 'default';
   const surfaceClasses = {
     default: 'mt-surface-input-default',
     ghost: 'mt-surface-input-ghost',
+    panel: 'mt-surface-input-panel',
   };
 
   const baseClasses = 'w-fit border rounded outline-none';
@@ -28,7 +29,7 @@ export const MtInput = forwardRef<HTMLInputElement, MtInputProps>(({ size, varia
     <input
       {...props}
       ref={ref}
-      className={`${baseClasses} ${layoutClasses[actualSize]} ${surfaceClasses[actualvariant]} ${className || ''}`}
+      className={`${baseClasses} ${layoutClasses[actualSize]} ${surfaceClasses[actualVariant]} ${className || ''}`}
     />
   );
 });

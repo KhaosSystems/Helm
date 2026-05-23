@@ -75,6 +75,24 @@ export const Variants: Story = {
           <MtDropdownItem>Item 3</MtDropdownItem>
         </MtDropdown>
       </div>
+
+      <div className="flex w-56 flex-col gap-2">
+        <small>accent</small>
+        <MtDropdown title="Open dropdown" variant="accent">
+          <MtDropdownItem>Item 1</MtDropdownItem>
+          <MtDropdownItem>Item 2</MtDropdownItem>
+          <MtDropdownItem>Item 3</MtDropdownItem>
+        </MtDropdown>
+      </div>
+
+      <div className="flex w-56 flex-col gap-2">
+        <small>panel</small>
+        <MtDropdown title="Open dropdown" variant="panel">
+          <MtDropdownItem>Item 1</MtDropdownItem>
+          <MtDropdownItem>Item 2</MtDropdownItem>
+          <MtDropdownItem>Item 3</MtDropdownItem>
+        </MtDropdown>
+      </div>
     </div>
   ),
 };

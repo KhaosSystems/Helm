@@ -4,7 +4,7 @@ import { MtButton } from './MtButton';
 
 interface MtSearchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'variant' | 'type'> {
   size?: 'medium' | 'large';
-  variant?: 'default' | 'ghost';
+  variant?: 'default' | 'ghost' | 'panel';
 }
 
 export function MtSearch({
@@ -30,6 +30,7 @@ export function MtSearch({
   const surfaceClasses = {
     default: 'mt-surface-input-default',
     ghost: 'mt-surface-input-ghost',
+    panel: 'mt-surface-input-panel',
   };
 
   const iconSizeClass = size === 'large' ? 'h-4 w-4' : 'h-3.5 w-3.5';

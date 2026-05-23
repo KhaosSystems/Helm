@@ -41,7 +41,7 @@ export const Matrix: Story = {
   args: { children: <span>Button</span> },
   render: () => (
     <StoryMatrix
-      rows={axis('Variant', 'default', 'accent', 'ghost')}
+      rows={axis('Variant', 'default', 'accent', 'ghost', 'panel')}
       columns={axis('State', 'enabled', 'disabled')}
       sections={axis('Kind', 'default', 'icon')}
       groups={axis('Size', 'medium', 'large')}

@@ -31,6 +31,7 @@ export const Variants: Story = {
     <div className="flex flex-col gap-4">
       <MtInput placeholder="Default variant" variant="default" />
       <MtInput placeholder="Ghost variant" variant="ghost" />
+      <MtInput placeholder="Panel variant" variant="panel" />
     </div>
   ),
 };

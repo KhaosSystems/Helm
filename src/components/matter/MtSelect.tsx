@@ -71,7 +71,7 @@ interface MtSelectProps {
   onValueChange?: (value: string) => void;
   size?: 'medium' | 'large';
   options?: { value: string; label: React.ReactNode; icon?: React.ReactNode; disabled?: boolean }[];
-  variant?: 'default' | 'ghost';
+  variant?: 'default' | 'ghost' | 'accent' | 'panel';
   showCaret?: boolean;
 }
 

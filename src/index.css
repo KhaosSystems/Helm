@@ -113,6 +113,16 @@
   @apply disabled:bg-transparent disabled:text-input-content-disabled;
 }
 
+@utility mt-surface-input-panel {
+  @apply text-base border-none select-none;
+  @apply bg-surface-panel text-input-content-default;
+  @apply data-[selected]:bg-surface-popover;
+  @apply hover:bg-surface-elevated;
+  @apply mt-ring-input-default;
+  @apply active:bg-surface-panel/50;
+  @apply disabled:bg-surface-panel/50 disabled:border-border-default/50 disabled:text-input-content-disabled;
+}
+
 @utility mt-surface-panel {
 	@apply bg-surface-panel;
 	@apply rounded;

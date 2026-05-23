@@ -19,6 +19,7 @@ export const Variants: Story = {
     <div className="flex flex-col gap-4">
       <MtSearch placeholder="Default Search" />
       <MtSearch placeholder="Ghost Search" variant="ghost" />
+      <MtSearch placeholder="Panel Search" variant="panel" />
     </div>
   ),
 };

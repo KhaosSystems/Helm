@@ -38,7 +38,7 @@ interface MtDropdownProps {
   className?: string;
   kind?: 'default' | 'icon';
   size?: 'medium' | 'large';
-  variant?: 'default' | 'ghost' | 'accent';
+  variant?: 'default' | 'ghost' | 'accent' | 'panel';
   showCaret?: boolean;
 }
 

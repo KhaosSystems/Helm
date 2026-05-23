@@ -74,9 +74,25 @@ export const Variants: Story = {
         <small>default</small>
         <MtSelect placeholder="Select a status">{statusOptions}</MtSelect>
       </div>
+      
       <div className="flex w-56 flex-col gap-2">
         <small>ghost</small>
         <MtSelect variant="ghost" placeholder="Select a status">
+          {statusOptions}
+        </MtSelect>
+      </div>
+       
+      <div className="flex w-56 flex-col gap-2">
+        <small>accent</small>
+        <MtSelect variant="accent" placeholder="Select a status">
+          {statusOptions}
+        </MtSelect>
+      </div>
+
+
+      <div className="flex w-56 flex-col gap-2">
+        <small>panel</small>
+        <MtSelect variant="panel" placeholder="Select a status">
           {statusOptions}
         </MtSelect>
       </div>

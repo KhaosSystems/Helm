@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 import React from 'react';
 
-type MtButtonSurface = 'default' | 'accent' | 'ghost';
+type MtButtonSurface = 'default' | 'accent' | 'ghost' | 'panel';
 
 interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
@@ -34,6 +34,7 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
       default: 'mt-surface-input-default',
       accent: 'mt-surface-input-accent',
       ghost: 'mt-surface-input-ghost',
+      panel: 'mt-surface-input-panel',
     };
 
     const baseClasses =
