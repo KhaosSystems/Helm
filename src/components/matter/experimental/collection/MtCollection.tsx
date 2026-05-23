@@ -14,10 +14,13 @@
  *  - [MUI DataGrid](https://mui.com/x/react-data-grid/)
  */
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { MtCollectionToolbar } from './MtCollectionToolbar';
 import { MtCollectionContext } from './MtCollectionContext';
 import { MtCollectionViewSettings } from './MtCollectionViewSettings';
+import { MtCollectionSelectionToolbar } from './MtCollectionSelectionToolbar';
+import type { MtCollectionAssigneeOption } from './MtCollectionEntryControls';
+import type { MtCollectionQuickFilterState } from './MtCollectionEntryUtils';
 
 /**
  * Minimal interface for an item represented in the collection.
@@ -26,10 +29,18 @@ export interface MtCollectionEntry {
   id: any;
 }
 
+export interface MtCollectionDiscreteValueOption {
+  value: string;
+  label?: string;
+  icon?: string;
+  color?: string;
+}
+
 export interface MtCollectionProperty {
   id: string;
   label: string;
   groupable?: boolean;
+  discreteValues?: Array<string | MtCollectionDiscreteValueOption>;
 }
 
 export interface MtCollectionViewSettingsState {
@@ -116,6 +127,14 @@ export interface MtCollectionLayoutProps<T extends MtCollectionEntry> {
   viewSettings?: MtCollectionViewSettingsState;
   /** Custom renderer for each entry. Layouts should fall back to their own default if omitted. */
   renderEntry?: MtCollectionEntryRenderer<T>;
+  /** Optional assignee options for entry-level assignee controls. */
+  assigneeOptions?: MtCollectionAssigneeOption[];
+  /** Optional callback invoked when a layout updates an entry field. */
+  onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
+  /** When true, subtask expand/collapse and add-subtask controls are shown. */
+  subtasksEnabled?: boolean;
+  /** Called when the user clicks "+ Add subtask" for a parent entry. */
+  onAddSubtask?: (parentEntry: T) => void | Promise<void>;
 }
 
 /**
@@ -124,6 +143,8 @@ export interface MtCollectionLayoutProps<T extends MtCollectionEntry> {
 export interface MtCollectionProps<T extends MtCollectionEntry> {
   entries: T[];
   views: MtCollectionView<T>[];
+  /** Optional template views used when creating new views from available layouts. */
+  viewTemplates?: MtCollectionView<T>[];
   properties?: MtCollectionProperty[];
   /**  Undefined will render default toolbar, null will render no toolbar. */
   toolbar?: ReactNode | null;
@@ -132,6 +153,28 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
   showViewSettings?: boolean;
   viewSettings?: ReactNode;
   className?: string;
+  assigneeOptions?: MtCollectionAssigneeOption[];
+  currentUserQuickFilter?: {
+    assignee: string;
+    label: string;
+    avatarSrc?: string;
+  };
+  onUpdateEntry?: (entry: T, patch: Partial<T>) => void | Promise<void>;
+  onAddEntry?: () => void | Promise<void>;
+  /** When true, subtask expand/collapse and add-subtask controls are shown. */
+  subtasksEnabled?: boolean;
+  /** Called when the user clicks "+ Add subtask" for a parent entry. */
+  onAddSubtask?: (parentEntry: T) => void | Promise<void>;
+  /** Persist a view and optionally return its persisted id. */
+  onSaveView?: (view: MtCollectionView<T>) => Promise<string | void>;
+  /** Delete a persisted view. */
+  onDeleteView?: (viewId: string) => Promise<void>;
+  /** Bulk-delete entries by id. Called immediately with no confirmation dialog. */
+  onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
+  /** Persist a reordered list of view IDs. */
+  onReorderViews?: (viewIds: string[]) => void | Promise<void>;
+  /** Callback invoked when an entry is clicked (e.g. to navigate to detail). */
+  onEntryClick?: (entry: T) => void;
 }
 
 /**
@@ -140,12 +183,24 @@ export interface MtCollectionProps<T extends MtCollectionEntry> {
 export function MtCollection<T extends MtCollectionEntry>({
   entries,
   views,
+  viewTemplates,
   properties = [{ id: 'id', label: 'ID' }],
   toolbar,
   renderEntry,
   showViewSettings = false,
   viewSettings = <MtCollectionViewSettings />,
   className,
+  assigneeOptions,
+  currentUserQuickFilter,
+  onUpdateEntry,
+  onAddEntry,
+  subtasksEnabled,
+  onAddSubtask,
+  onSaveView,
+  onDeleteView,
+  onDeleteEntries,
+  onReorderViews,
+  onEntryClick,
 }: MtCollectionProps<T>) {
   const [viewState, setViewState] = useState<MtCollectionView<T>[]>(views);
   const [propertyState, setPropertyState] = useState<MtCollectionProperty[]>(properties);
@@ -153,6 +208,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   const [viewSettingsPageId, setViewSettingsPageId] = useState<string>('root');
   const [focusViewNameEditor, setFocusViewNameEditor] = useState(false);
   const [currentViewId, setCurrentViewId] = useState<string | null>(views[0]?.id ?? null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [transientQuickFilters, setTransientQuickFiltersState] = useState<MtCollectionQuickFilterState>({});
   const [defaultViewState, setDefaultViewState] = useState<Record<string, MtCollectionViewDefaultSnapshot>>(
     Object.fromEntries(views.map((view) => [view.id, buildViewDefaultSnapshot(view)])),
   );
@@ -170,6 +227,8 @@ export function MtCollection<T extends MtCollectionEntry>({
   }, [properties]);
 
   const currentView = viewState.find((view) => view.id === currentViewId) ?? null;
+  const currentViewQuickFilters = ((currentView?.settings?.quickFilters as MtCollectionQuickFilterState | undefined) ??
+    {}) satisfies MtCollectionQuickFilterState;
 
   const setCurrentView = (nextView: MtCollectionView<T> | null) => {
     if (!nextView) {
@@ -191,7 +250,15 @@ export function MtCollection<T extends MtCollectionEntry>({
     setCurrentViewId(nextView.id);
   };
 
-  const addView = (nextView: MtCollectionView<T>) => {
+  const addView = async (nextView: MtCollectionView<T>) => {
+    if (onSaveView) {
+      const persistedId = await onSaveView(nextView);
+      if (persistedId) {
+        setCurrentViewId(persistedId);
+      }
+      return;
+    }
+
     setViewState((previousViews) => [...previousViews, nextView]);
     setDefaultViewState((previousDefaults) => ({
       ...previousDefaults,
@@ -213,7 +280,9 @@ export function MtCollection<T extends MtCollectionEntry>({
     );
   };
 
-  const deleteView = (viewId: string) => {
+  const deleteView = async (viewId: string) => {
+    await onDeleteView?.(viewId);
+
     setViewState((previousViews) => {
       const nextViews = previousViews.filter((view) => view.id !== viewId);
 
@@ -236,6 +305,14 @@ export function MtCollection<T extends MtCollectionEntry>({
     });
   };
 
+  const reorderViews = async (viewIds: string[]) => {
+    setViewState((previousViews) => {
+      const viewMap = new Map(previousViews.map((view) => [view.id, view]));
+      return viewIds.map((id) => viewMap.get(id)).filter(Boolean) as MtCollectionView<T>[];
+    });
+    await onReorderViews?.(viewIds);
+  };
+
   const hasCurrentViewUnsavedChanges = (() => {
     if (!currentView) {
       return false;
@@ -251,15 +328,43 @@ export function MtCollection<T extends MtCollectionEntry>({
     return !areViewDefaultsEqual(currentSnapshot, defaultSnapshot);
   })();
 
-  const saveCurrentViewAsDefault = () => {
+  const saveCurrentViewAsDefault = async () => {
     if (!currentView) {
       return;
     }
 
-    setDefaultViewState((previousDefaults) => ({
-      ...previousDefaults,
-      [currentView.id]: buildViewDefaultSnapshot(currentView),
-    }));
+    const persistedId = await onSaveView?.(currentView);
+
+    if (persistedId && persistedId !== currentView.id) {
+      setViewState((previousViews) =>
+        previousViews.map((view) =>
+          view.id === currentView.id
+            ? {
+                ...view,
+                id: persistedId,
+              }
+            : view,
+        ),
+      );
+
+      setCurrentViewId((previousId) => (previousId === currentView.id ? persistedId : previousId));
+    }
+
+    setDefaultViewState((previousDefaults) => {
+      const nextDefaults = { ...previousDefaults };
+      const nextId = persistedId ?? currentView.id;
+
+      if (persistedId && persistedId !== currentView.id) {
+        delete nextDefaults[currentView.id];
+      }
+
+      nextDefaults[nextId] = buildViewDefaultSnapshot({
+        ...currentView,
+        id: nextId,
+      });
+
+      return nextDefaults;
+    });
   };
 
   const revertCurrentViewToDefault = () => {
@@ -280,6 +385,49 @@ export function MtCollection<T extends MtCollectionEntry>({
     });
   };
 
+  const setQuickFilters = useCallback(
+    (patch: Partial<MtCollectionQuickFilterState>) => {
+      if (!currentView) {
+        return;
+      }
+
+      setCurrentView({
+        ...currentView,
+        settings: {
+          ...(currentView.settings ?? {}),
+          quickFilters: {
+            ...currentViewQuickFilters,
+            ...patch,
+          },
+        },
+      });
+    },
+    [currentView, currentViewQuickFilters],
+  );
+
+  const setTransientQuickFilters = useCallback((patch: Partial<MtCollectionQuickFilterState>) => {
+    setTransientQuickFiltersState((previousFilters) => ({
+      ...previousFilters,
+      ...patch,
+    }));
+  }, []);
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
   const openViewSettings = (pageId = 'root', options?: { focusViewNameEditor?: boolean }) => {
     setViewSettingsPageId(pageId);
     setFocusViewNameEditor(Boolean(options?.focusViewNameEditor));
@@ -291,6 +439,10 @@ export function MtCollection<T extends MtCollectionEntry>({
   const currentViewSettings: MtCollectionViewSettingsState = {
     visiblePropertyIds: currentView?.settings?.visiblePropertyIds ?? getDefaultVisiblePropertyIds(),
     ...(currentView?.settings ?? {}),
+    quickFilters: {
+      ...currentViewQuickFilters,
+      ...transientQuickFilters,
+    },
   };
 
   const isViewSettingsOpen = Boolean(showViewSettingsState && currentView && viewSettings);
@@ -299,15 +451,23 @@ export function MtCollection<T extends MtCollectionEntry>({
     <MtCollectionContext.Provider
       value={{
         entries,
+        onAddEntry,
         views: viewState,
+        viewTemplates: viewTemplates ?? views,
         currentView,
         setCurrentView,
         addView,
         updateView,
         deleteView,
+        reorderViews,
         hasCurrentViewUnsavedChanges,
         saveCurrentViewAsDefault,
         revertCurrentViewToDefault,
+        quickFilters: currentViewQuickFilters,
+        setQuickFilters,
+        transientQuickFilters,
+        setTransientQuickFilters,
+        currentUserQuickFilter,
         showViewSettings: showViewSettingsState,
         setShowViewSettings: setShowViewSettingsState,
         viewSettingsPageId,
@@ -317,9 +477,16 @@ export function MtCollection<T extends MtCollectionEntry>({
         openViewSettings,
         properties: propertyState,
         setProperties: setPropertyState,
+        selectedIds,
+        toggleSelected,
+        clearSelection,
+        onDeleteEntries,
+        onEntryClick,
       }}
     >
-      <div className={`h-full min-h-0 flex flex-col border border-[#2A2A2A] bg-[#111111] rounded ${className}`}>
+      <div
+        className={`relative h-full min-h-0 flex flex-col border border-[#2A2A2A] bg-[#111111] rounded ${className}`}
+      >
         {/* Toolbar rendering logic */}
         {toolbar === undefined && <MtCollectionToolbar /*<T>*/ />}
         {toolbar !== undefined &&
@@ -337,6 +504,10 @@ export function MtCollection<T extends MtCollectionEntry>({
                 properties={propertyState}
                 viewSettings={currentViewSettings}
                 renderEntry={currentView.renderEntry ?? renderEntry}
+                assigneeOptions={assigneeOptions}
+                onUpdateEntry={onUpdateEntry}
+                subtasksEnabled={subtasksEnabled}
+                onAddSubtask={onAddSubtask}
               />
             ) : (
               <div>No view selected</div>
@@ -349,6 +520,9 @@ export function MtCollection<T extends MtCollectionEntry>({
             {isViewSettingsOpen ? viewSettings : null}
           </div>
         </div>
+
+        {/* Selection overlay toolbar — floats above content when entries are selected */}
+        <MtCollectionSelectionToolbar />
       </div>
     </MtCollectionContext.Provider>
   );

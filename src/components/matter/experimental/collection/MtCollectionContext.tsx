@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { MtCollectionEntry, MtCollectionProperty, MtCollectionView } from './MtCollection'; // or your types location
+import type { MtCollectionQuickFilterState } from './MtCollectionEntryUtils';
 
 /**
  * Context props for MtCollection.
@@ -8,7 +9,9 @@ import type { MtCollectionEntry, MtCollectionProperty, MtCollectionView } from '
  */
 interface MtCollectionContextProps<T extends MtCollectionEntry> {
   entries: T[];
+  onAddEntry?: () => void | Promise<void>;
   views: MtCollectionView<T>[];
+  viewTemplates: MtCollectionView<T>[];
   currentView: MtCollectionView<T> | null;
   showViewSettings: boolean;
   setShowViewSettings: (show: boolean) => void;
@@ -20,12 +23,32 @@ interface MtCollectionContextProps<T extends MtCollectionEntry> {
   properties: MtCollectionProperty[];
   setProperties: (properties: MtCollectionProperty[]) => void;
   setCurrentView: (view: MtCollectionView<T> | null) => void;
-  addView: (view: MtCollectionView<T>) => void;
+  addView: (view: MtCollectionView<T>) => void | Promise<void>;
   updateView: (viewId: string, patch: Partial<MtCollectionView<T>>) => void;
-  deleteView: (viewId: string) => void;
+  deleteView: (viewId: string) => void | Promise<void>;
+  reorderViews: (viewIds: string[]) => void | Promise<void>;
   hasCurrentViewUnsavedChanges: boolean;
-  saveCurrentViewAsDefault: () => void;
+  saveCurrentViewAsDefault: () => void | Promise<void>;
   revertCurrentViewToDefault: () => void;
+  quickFilters: MtCollectionQuickFilterState;
+  setQuickFilters: (patch: Partial<MtCollectionQuickFilterState>) => void;
+  transientQuickFilters: MtCollectionQuickFilterState;
+  setTransientQuickFilters: (patch: Partial<MtCollectionQuickFilterState>) => void;
+  currentUserQuickFilter?: {
+    assignee: string;
+    label: string;
+    avatarSrc?: string;
+  };
+  /** Set of selected entry IDs. */
+  selectedIds: Set<string>;
+  /** Toggle selection for a single entry by its id. */
+  toggleSelected: (id: string) => void;
+  /** Clear all selections. */
+  clearSelection: () => void;
+  /** Callback to delete selected entries (no confirmation). Only present when consumer provides it. */
+  onDeleteEntries?: (ids: Set<string>) => void | Promise<void>;
+  /** Callback invoked when an entry is clicked (e.g. to navigate to detail). */
+  onEntryClick?: (entry: T) => void;
 }
 
 export const MtCollectionContext = createContext<MtCollectionContextProps<any> | null>(null);

@@ -4,6 +4,21 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @plugin "@tailwindcss/typography";
+/*
+ * Required for monorepo source consumption (e.g. apps/anchor via Vite alias).
+ * Ensures Tailwind scans Helm component files when this stylesheet is compiled
+ * outside the helm package root, so app rendering matches Storybook output.
+ */
+@source "./**/*.{ts,tsx}";
+
+/**
+ * Source inline to ensure that these utilities are included in the final CSS
+ * output, even if not directly used in the codebase. This is necessary because
+ * these utilities are intended for use in user content (e.g., rich text editor
+ * content) and may not be directly referenced in the codebase, which could lead
+ * to them being tree-shaken during the build process.
+ */
+@source inline("mt-text-default mt-text-caption mt-layout-input-medium mt-layout-input-large mt-ring-input-default mt-ring-input-accent mt-ring-input-error mt-surface-input-default mt-surface-input-accent mt-surface-input-ghost mt-surface-panel mt-surface-elevated mt-surface-popover mt-surface-menu mt-surface-dialog");
 
 /**
  * Source inline to ensure that these utilities are included in the final CSS
@@ -124,9 +139,9 @@
 }
 
 @utility mt-surface-panel {
-	@apply bg-surface-panel;
-	@apply rounded;
-	@apply text-text-primary;
+  @apply bg-surface-panel;
+  @apply rounded;
+  @apply text-text-primary;
 }
 
 @utility mt-surface-elevated {

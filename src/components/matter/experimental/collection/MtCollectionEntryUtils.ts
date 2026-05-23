@@ -1,5 +1,7 @@
 import type { MtFilterGroup, MtFilterNode, MtFilterRule } from '../../MtFilter';
+import type { MtFilterField } from '../../MtFilter';
 import type { MtSortRule } from '../../MtSort';
+import type { MtCollectionProperty } from './MtCollection';
 
 type MtCollectionLegacyFilterState = {
   query?: string;
@@ -11,6 +13,7 @@ type MtCollectionLegacyFilterState = {
 export type MtCollectionQuickFilterState = {
   status?: string[];
   assignee?: string[];
+  requiredAssignee?: string;
   search?: string;
 };
 
@@ -55,6 +58,10 @@ export function getCollectionEntryAssignee(entry: any) {
   if (typeof entry?.assignee === 'string') return entry.assignee;
   if (typeof entry?.assignee?.name === 'string') return entry.assignee.name;
   return '';
+}
+
+export function getCollectionEntryType(entry: any) {
+  return String(entry?.entryType ?? entry?.issueType ?? entry?.type ?? '');
 }
 
 export function toggleCollectionFilterValue(values: string[] | undefined, value: string) {
@@ -137,6 +144,7 @@ export function applyCollectionFilters(entries: any[], filterState: MtCollection
 function getEntryFieldValue(entry: any, field: string) {
   if (field === 'id') return getCollectionEntryId(entry);
   if (field === 'summary') return getCollectionEntrySummary(entry);
+  if (field === 'type' || field === 'entryType' || field === 'issueType') return getCollectionEntryType(entry);
   const value = entry?.[field as keyof typeof entry];
   if (value === null || value === undefined) return undefined;
   return String(value);
@@ -212,6 +220,71 @@ export function getCollectionFilterRuleCount(filterState: MtCollectionFilterStat
   return countRules(filterState);
 }
 
+export const COLLECTION_SORT_FIELDS = [
+  { value: 'updated', label: 'Updated' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'status', label: 'Status' },
+  { value: 'type', label: 'Type' },
+  { value: 'assignee', label: 'Assignee' },
+  { value: 'summary', label: 'Summary' },
+];
+
+export const COLLECTION_FILTER_FIELDS: MtFilterField[] = [
+  { value: 'summary', label: 'Summary' },
+  { value: 'status', label: 'Status' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'type', label: 'Type' },
+  { value: 'assignee', label: 'Assignee' },
+  { value: 'id', label: 'ID' },
+];
+
+/**
+ * Build filter fields enriched with dropdown options from property `discreteValues`.
+ *
+ * The base set of filter fields is always present. When a `properties` schema is
+ * provided, fields whose id matches a property with `discreteValues` will offer
+ * those values as selectable options in the filter value dropdown.
+ *
+ * Property id mapping: `status`/`state` → "status", `type`/`entryType`/`issueType` → "type".
+ */
+export function buildCollectionFilterFields(properties?: MtCollectionProperty[]): MtFilterField[] {
+  if (!properties || properties.length === 0) return COLLECTION_FILTER_FIELDS;
+
+  const resolveDiscreteValues = (...ids: string[]) => {
+    for (const id of ids) {
+      const prop = properties.find((p) => p.id === id);
+      if (prop?.discreteValues && prop.discreteValues.length > 0) {
+        return prop.discreteValues.map((v) =>
+          typeof v === 'string' ? { value: v } : { value: v.value, label: v.label },
+        );
+      }
+    }
+    return undefined;
+  };
+
+  return COLLECTION_FILTER_FIELDS.map((field) => {
+    let options = resolveDiscreteValues(field.value);
+
+    // Handle aliases
+    if (!options && field.value === 'status') {
+      options = resolveDiscreteValues('state');
+    }
+    if (!options && field.value === 'type') {
+      options = resolveDiscreteValues('entryType', 'issueType');
+    }
+
+    return options ? { ...field, options } : field;
+  });
+}
+
+export const COLLECTION_FILTER_OPERATORS = [
+  { value: 'is', label: 'is', requiresValue: true },
+  { value: 'is_not', label: 'is not', requiresValue: true },
+  { value: 'contains', label: 'contains', requiresValue: true },
+  { value: 'is_empty', label: 'is empty', requiresValue: false },
+  { value: 'is_not_empty', label: 'is not empty', requiresValue: false },
+];
+
 export function isCollectionFilterActive(filterState: MtCollectionFilterState | undefined) {
   if (!filterState) {
     return false;
@@ -247,6 +320,12 @@ export function applyCollectionSort(entries: any[], sortRules: MtSortRule[] | un
   const priorityRank: Record<string, number> = { high: 3, medium: 2, low: 1 };
   const statusRank: Record<string, number> = { backlog: 1, open: 2, 'in progress': 3, done: 4 };
 
+  const resolveFieldValue = (entry: any, field: string) => {
+    if (field === 'updated') return entry?.updatedAt ?? entry?.updated ?? entry?.id;
+    if (field === 'type' || field === 'entryType' || field === 'issueType') return getCollectionEntryType(entry);
+    return entry?.[field as keyof typeof entry];
+  };
+
   const compareByField = (left: any, right: any, field: string) => {
     if (field === 'priority') {
       const leftValue = priorityRank[String(left?.priority ?? '').toLowerCase()] ?? 0;
@@ -260,10 +339,8 @@ export function applyCollectionSort(entries: any[], sortRules: MtSortRule[] | un
       return rightValue - leftValue;
     }
 
-    const leftValue =
-      field === 'updated' ? (left?.updatedAt ?? left?.updated ?? left?.id) : left?.[field as keyof typeof left];
-    const rightValue =
-      field === 'updated' ? (right?.updatedAt ?? right?.updated ?? right?.id) : right?.[field as keyof typeof right];
+    const leftValue = resolveFieldValue(left, field);
+    const rightValue = resolveFieldValue(right, field);
 
     const leftNumber = Number(leftValue);
     const rightNumber = Number(rightValue);
@@ -289,6 +366,15 @@ export function applyCollectionSort(entries: any[], sortRules: MtSortRule[] | un
       return 0;
     }
 
+    // Primary sort: manual position (higher = closer to top).
+    // Items without a position (undefined/null) are treated as 0.
+    const leftPos = typeof left?.position === 'number' ? left.position : 0;
+    const rightPos = typeof right?.position === 'number' ? right.position : 0;
+    if (leftPos !== rightPos) {
+      return rightPos - leftPos;
+    }
+
+    // Secondary sort: fallback field (e.g. updated time)
     return compareByField(left, right, fallbackSortBy);
   });
 
@@ -302,11 +388,12 @@ export function applyCollectionQuickFilters(entries: any[], quickFilters: MtColl
 
   const statusFilters = quickFilters.status ?? [];
   const assigneeFilters = quickFilters.assignee ?? [];
+  const requiredAssignee = String(quickFilters.requiredAssignee ?? '');
   const search = String(quickFilters.search ?? '')
     .trim()
     .toLowerCase();
 
-  if (statusFilters.length === 0 && assigneeFilters.length === 0 && !search) {
+  if (statusFilters.length === 0 && assigneeFilters.length === 0 && !requiredAssignee && !search) {
     return entries;
   }
 
@@ -319,6 +406,10 @@ export function applyCollectionQuickFilters(entries: any[], quickFilters: MtColl
     }
 
     if (assigneeFilters.length > 0 && !assigneeFilters.includes(assigneeValue)) {
+      return false;
+    }
+
+    if (requiredAssignee && assigneeValue !== requiredAssignee) {
       return false;
     }
 

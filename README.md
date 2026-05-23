@@ -2,7 +2,7 @@
 
 https://www.npmjs.com/package/@khaos-systems/helm
 
-This package contains the Matter design system and Storybook site extracted from `anchor`. 
+This package contains the Matter design system and Storybook site extracted from `anchor`.
 
 ## Commands
 
@@ -17,6 +17,6 @@ This package contains the Matter design system and Storybook site extracted from
 Install from workspace and import:
 
 ```ts
-import { MtButton } from '@khaos/matter';
-import '@khaos/matter/styles.css';
+import { MtButton } from '@khaos-systems/helm';
+import '@khaos-systems/helm/styles.css';
 ```

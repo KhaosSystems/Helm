@@ -15,6 +15,7 @@ export {
   MtLowIcon,
   MtMediumIcon,
   MtOpenIcon,
+  MtSubgraphIcon,
 } from './components/matter/MtIcon';
 export { MtInlineToast } from './components/matter/MtInlineToast';
 export { MtInput } from './components/matter/MtInput';
@@ -26,9 +27,12 @@ export { MtSortDropdown } from './components/matter/MtSort';
 export { default as MtStack } from './components/matter/MtStack';
 export { MtTextarea } from './components/matter/MtTextarea';
 export { MtToggletip } from './components/matter/MtToggletip';
+export { MtToastProvider, useMtToast } from './components/matter/MtToast';
 export { MtTooltip } from './components/matter/MtTooltip';
 export { MtTree } from './components/matter/MtTree';
 export type { MtTreeItem } from './components/matter/MtTree';
 export { MtAlert } from './components/matter/MtAlert';
 export { default as MtAvatar } from './components/matter/MtAvatar';
 export { default as MtAvatarGroup } from './components/matter/MtAvatarGroup';
+export { MtIconSelect, MtIconPreview, ICON_MAP } from './components/matter/MtIconSelect';
+export type { MtIconSelectProps } from './components/matter/MtIconSelect';

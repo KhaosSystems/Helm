@@ -2,7 +2,7 @@ import { MtCollectionLayoutComponent } from '../MtCollection';
 
 /** Default row component used when no renderEntry is provided. */
 function DefaultTableEntry({ entry }: { entry: any }) {
-  return <div className="flex items-center px-6 border-b border-[#2A2A2A] h-11 bg-[#141414]">{entry.id}</div>;
+  return <div className="flex items-center px-6 border-b border-[#2A2A2A] h-[44px] bg-[#141414]">{entry.id}</div>;
 }
 
 export const MtCollectionTableLayout: MtCollectionLayoutComponent = (props) => {

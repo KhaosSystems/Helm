@@ -1,51 +1,64 @@
 import { Circle, CircleCheckBig, DiamondPlus, Search, Settings, Users, X } from 'lucide-react';
 import React from 'react';
 import { MtButton } from '../../MtButton';
+import MtAvatar from '../../MtAvatar';
 import { useMtCollection } from './MtCollectionContext';
 import { MtDropdown, MtDropdownItem } from '../../MtDropdown';
 import { MtPopover } from '../../MtPopover';
 import { WithContextMenu } from '../../MtContextMenu';
-import type { MtCollectionQuickFilterState } from './MtCollectionEntryUtils';
 import { MtCollectionViewIcon } from './MtIconSelect';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
   const {
     views,
+    viewTemplates,
     currentView,
     setCurrentView,
     entries,
+    onAddEntry,
     addView,
     deleteView,
+    reorderViews,
     openViewSettings,
     hasCurrentViewUnsavedChanges,
     saveCurrentViewAsDefault,
     revertCurrentViewToDefault,
+    quickFilters,
+    setQuickFilters,
+    transientQuickFilters,
+    setTransientQuickFilters,
+    currentUserQuickFilter,
   } = useMtCollection /*<T>*/();
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [isAddViewOpen, setIsAddViewOpen] = React.useState(false);
-  const [templateLayoutName, setTemplateLayoutName] = React.useState<string>(views[0]?.layout?.name ?? '');
+  const [templateLayoutName, setTemplateLayoutName] = React.useState<string>(
+    viewTemplates[0]?.id ?? views[0]?.id ?? '',
+  );
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const nextViewIdRef = React.useRef(views.length + 1);
   const availableLayouts = React.useMemo(() => {
-    const seen = new Set<string>();
+    const seen = new Set<unknown>();
     const layouts: Array<{ id: string; name: string; templateView: (typeof views)[number] }> = [];
 
-    views.forEach((view) => {
-      const layoutName = view.layout?.name ?? 'Layout';
-      if (seen.has(layoutName)) {
+    (viewTemplates.length > 0 ? viewTemplates : views).forEach((view) => {
+      const layoutKey = view.layout;
+      if (seen.has(layoutKey)) {
         return;
       }
 
-      seen.add(layoutName);
+      seen.add(layoutKey);
       layouts.push({
-        id: layoutName,
-        name: layoutName,
+        id: view.id,
+        name: view.name || view.layout?.name || 'Layout',
         templateView: view,
       });
     });
 
     return layouts;
-  }, [views]);
+  }, [viewTemplates, views]);
 
   const LayoutToolbarActions = currentView?.layout.ToolbarActions;
 
@@ -54,9 +67,6 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
   const handleToggleViewSettings = () => {
     context.setShowViewSettings(!context.showViewSettings);
   };
-
-  const viewSettings = currentView?.settings ?? {};
-  const quickFilters = (viewSettings.quickFilters as MtCollectionQuickFilterState | undefined) ?? {};
 
   const getStatusValue = (entry: unknown) => {
     if (!entry || typeof entry !== 'object') {
@@ -92,27 +102,13 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     return '';
   };
 
-  const setQuickFilters = (patch: Partial<MtCollectionQuickFilterState>) => {
-    if (!currentView) {
-      return;
-    }
-
-    setCurrentView({
-      ...currentView,
-      settings: {
-        ...(currentView.settings ?? {}),
-        quickFilters: {
-          ...quickFilters,
-          ...patch,
-        },
-      },
-    });
-  };
-
   const statusOptions = Array.from(new Set(entries.map((entry) => getStatusValue(entry)).filter(Boolean))).sort();
   const assigneeOptions = Array.from(new Set(entries.map((entry) => getAssigneeValue(entry)).filter(Boolean))).sort();
   const hasQuickStatusFilter = (quickFilters.status?.length ?? 0) > 0;
   const hasQuickAssigneeFilter = (quickFilters.assignee?.length ?? 0) > 0;
+  const hasCurrentUserQuickFilter = Boolean(
+    currentUserQuickFilter && transientQuickFilters.requiredAssignee === currentUserQuickFilter.assignee,
+  );
 
   React.useEffect(() => {
     if (!templateLayoutName || !availableLayouts.some((layout) => layout.id === templateLayoutName)) {
@@ -128,7 +124,7 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
       return;
     }
 
-    const baseName = templateView.layout?.name ?? 'View';
+    const baseName = templateLayout?.name ?? templateView.name ?? templateView.layout?.name ?? 'View';
     const existingCount = views.filter((view) => view.name.startsWith(baseName)).length;
     const viewName = existingCount > 0 ? `${baseName} ${existingCount + 1}` : baseName;
 
@@ -167,71 +163,50 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
     });
   };
 
+  const viewIds = React.useMemo(() => views.map((view) => view.id), [views]);
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleViewDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = viewIds.indexOf(String(active.id));
+    const newIndex = viewIds.indexOf(String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(viewIds, oldIndex, newIndex);
+    void reorderViews(reordered);
+  };
+
   return (
     <div className="flex items-center border-b border-[#2A2A2A] h-11 px-4">
       {/** Views */}
       <div className="flex items-center gap-1.5">
-        {views.length > 1 &&
-          views.map((view) => (
-            <WithContextMenu
-              key={view.id}
-              getContextMenuItems={() => [
-                {
-                  label: 'Rename',
-                  onSelect: () => {
+        <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleViewDragEnd}>
+          <SortableContext items={viewIds} strategy={horizontalListSortingStrategy}>
+            {views.length > 0 &&
+              views.map((view) => (
+                <SortableViewTab
+                  key={view.id}
+                  view={view}
+                  isActive={view.id === currentView?.id}
+                  onSelect={() => setCurrentView(view)}
+                  onOpenMenu={() => {
+                    setCurrentView(view);
+                  }}
+                  onRename={() => {
                     setCurrentView(view);
                     openViewSettings('root', { focusViewNameEditor: true });
-                  },
-                },
-                {
-                  label: 'Edit view',
-                  onSelect: () => {
+                  }}
+                  onEdit={() => {
                     setCurrentView(view);
                     openViewSettings('root');
-                  },
-                },
-                { label: '', separator: true },
-                {
-                  label: 'Delete view',
-                  disabled: views.length <= 1,
-                  onSelect: () => {
-                    deleteView(view.id);
-                  },
-                },
-                {
-                  label: 'Duplicate view',
-                  onSelect: () => duplicateView(view.id),
-                },
-                {
-                  label: 'Copy link to view',
-                  disabled: true,
-                },
-              ]}
-            >
-              {({ openMenu }) => (
-                <MtButton
-                  variant="ghost"
-                  selected={view.id === currentView?.id}
-                  className="h-auto min-h-0 items-center gap-2 border border-transparent px-2 py-1 text-sm text-text-muted hover:text-text-primary data-[selected]:border-[#8D8D8D] data-[selected]:text-text-primary"
-                  onClick={(event) => {
-                    if (view.id === currentView?.id) {
-                      openMenu(event);
-                      return;
-                    }
-
-                    setCurrentView(view);
                   }}
-                  onContextMenu={(event) => {
-                    setCurrentView(view);
-                    openMenu(event);
-                  }}
-                >
-                  <MtCollectionViewIcon iconId={view.icon} layoutName={view.layout?.name} />
-                  <span>{view.name}</span>
-                </MtButton>
-              )}
-            </WithContextMenu>
-          ))}
+                  onDelete={views.length > 1 ? () => deleteView(view.id) : undefined}
+                  onDuplicate={() => duplicateView(view.id)}
+                />
+              ))}
+          </SortableContext>
+        </DndContext>
+        {views.length === 0 ? <span className="text-sm text-text-muted">No views</span> : null}
         <div className="border-r border-[#2A2A2A] h-6"></div>
         <MtPopover
           open={isAddViewOpen}
@@ -303,6 +278,26 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
 
         {LayoutToolbarActions ? <LayoutToolbarActions /> : null}
         <div className="border-r border-[#2A2A2A] h-6"></div>
+
+        {currentUserQuickFilter ? (
+          <MtButton
+            kind="icon"
+            variant={hasCurrentUserQuickFilter ? 'accent' : 'ghost'}
+            title={`Filter to ${currentUserQuickFilter.label}`}
+            onClick={() =>
+              setTransientQuickFilters({
+                requiredAssignee: hasCurrentUserQuickFilter ? undefined : currentUserQuickFilter.assignee,
+              })
+            }
+          >
+            <MtAvatar
+              size="xs"
+              src={currentUserQuickFilter.avatarSrc}
+              name={currentUserQuickFilter.label}
+              className="pointer-events-none"
+            />
+          </MtButton>
+        ) : null}
 
         <div className="flex items-center gap-1">
           <MtDropdown
@@ -393,10 +388,83 @@ export function MtCollectionToolbar /*<T extends MtCollectionEntry>*/() {
           <Settings size={16} stroke="#8D8D8D" />
         </MtButton>
 
-        <MtButton onClick={() => undefined} variant="accent">
+        <MtButton onClick={() => void onAddEntry?.()} variant="accent">
           + Add
         </MtButton>
       </div>
     </div>
+  );
+}
+
+/** Sortable view tab — wraps a single view button with drag-and-drop via dnd-kit. */
+function SortableViewTab({
+  view,
+  isActive,
+  onSelect,
+  onOpenMenu,
+  onRename,
+  onEdit,
+  onDelete,
+  onDuplicate,
+}: {
+  view: { id: string; name: string; icon?: string; layout?: unknown };
+  isActive: boolean;
+  onSelect: () => void;
+  onOpenMenu: (event: React.MouseEvent) => void;
+  onRename: () => void;
+  onEdit: () => void;
+  onDelete?: () => void;
+  onDuplicate: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: view.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  };
+
+  const layoutName =
+    view.layout && typeof view.layout === 'object' && 'name' in view.layout
+      ? (view.layout as { name?: string }).name
+      : undefined;
+
+  return (
+    <WithContextMenu
+      getContextMenuItems={() => [
+        { label: 'Rename', onSelect: onRename },
+        { label: 'Edit view', onSelect: onEdit },
+        { label: '', separator: true },
+        { label: 'Delete view', disabled: !onDelete, onSelect: () => onDelete?.() },
+        { label: 'Duplicate view', onSelect: onDuplicate },
+        { label: 'Copy link to view', disabled: true },
+      ]}
+    >
+      {({ openMenu }) => (
+        <MtButton
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          variant="ghost"
+          selected={isActive}
+          className="h-auto min-h-0 items-center gap-2 border border-transparent px-2 py-1 text-sm text-text-muted hover:text-text-primary data-[selected]:border-[#8D8D8D] data-[selected]:text-text-primary"
+          onClick={(event) => {
+            if (isActive) {
+              openMenu(event);
+              return;
+            }
+            onSelect();
+          }}
+          onContextMenu={(event) => {
+            onOpenMenu(event);
+            openMenu(event);
+          }}
+        >
+          <MtCollectionViewIcon iconId={view.icon} layoutName={layoutName} />
+          <span>{view.name}</span>
+        </MtButton>
+      )}
+    </WithContextMenu>
   );
 }

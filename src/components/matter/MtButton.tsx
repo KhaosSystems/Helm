@@ -7,7 +7,7 @@ interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   type?: 'button' | 'submit' | 'reset';
   kind?: 'default' | 'icon';
-  size?: 'medium' | 'large';
+  size?: 'small' | 'medium' | 'large';
   variant?: MtButtonSurface;
   selected?: boolean;
 }
@@ -17,15 +17,26 @@ interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  */
 const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
   (
-    { children, type = 'button', size = 'medium', variant = 'default', kind = 'default', selected = false, className, ...props },
+    {
+      children,
+      type = 'button',
+      size = 'medium',
+      variant = 'default',
+      kind = 'default',
+      selected = false,
+      className,
+      ...props
+    },
     ref,
   ) => {
     const defaultLayoutClasses = {
+      small: 'mt-layout-input-medium w-fit',
       medium: 'mt-layout-input-medium w-fit',
       large: 'mt-layout-input-large w-fit',
     };
 
     const iconKindClasses = {
+      small: 'w-[18px] h-[18px] p-0.5 flex items-center justify-center', // 18x18
       medium: 'w-[24px] h-[24px] p-1 flex items-center justify-center', // 24x24
       large: 'w-[32px] h-[32px] p-1 flex items-center justify-center', // 32x32
     };
@@ -37,8 +48,7 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
       panel: 'mt-surface-input-panel',
     };
 
-    const baseClasses =
-      'flex items-center gap-2 rounded transition-all duration-150';
+    const baseClasses = 'flex items-center gap-2 rounded transition-all duration-150';
 
     const layoutClasses = kind === 'icon' ? iconKindClasses[size] : defaultLayoutClasses[size];
 

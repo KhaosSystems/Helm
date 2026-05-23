@@ -58,9 +58,7 @@ export function MtCheckbox({
 
       {(label || description) && (
         <span className="flex min-w-0 flex-col">
-          {label && (
-            <span className={`text-sm leading-5 ${disabled ? '' : 'text-text-primary'}`}>{label}</span>
-          )}
+          {label && <span className={`text-sm leading-5 ${disabled ? '' : 'text-text-primary'}`}>{label}</span>}
           {description ? <span className="text-xs text-text-muted">{description}</span> : null}
         </span>
       )}

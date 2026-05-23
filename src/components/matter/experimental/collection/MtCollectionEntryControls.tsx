@@ -1,3 +1,4 @@
+import React from 'react';
 import { MtSelect, MtSelectItem } from '../../MtSelect';
 import MtAvatar from '../../MtAvatar';
 import {
@@ -9,7 +10,9 @@ import {
   MtMediumIcon,
   MtOpenIcon,
 } from '../../MtIcon';
-import { Bookmark, Bug, FileText, ListTodo, Sparkles } from 'lucide-react';
+import { CircleHelp, CircleSlash2, Copy } from 'lucide-react';
+import { MtIconPreview } from '../../MtIconSelect';
+import type { MtCollectionDiscreteValueOption } from './MtCollection';
 
 export type MtCollectionAssigneeOption = {
   value: string;
@@ -31,17 +34,96 @@ const STATUS_OPTIONS = [
   { value: 'open', label: 'Open', icon: <MtOpenIcon /> },
   { value: 'in progress', label: 'In Progress', icon: <MtInProgressIcon /> },
   { value: 'done', label: 'Done', icon: <MtCheckIcon /> },
+  { value: 'abandoned', label: 'Abandoned', icon: <CircleSlash2 size={14} stroke="#9CA3AF" /> },
+  { value: 'duplicate', label: 'Duplicate', icon: <Copy size={14} stroke="#9CA3AF" /> },
 ];
 
-const ISSUE_TYPE_OPTIONS = [
-  { value: 'user story', label: 'User story', icon: <Bookmark size={14} stroke="#60A5FA" /> },
-  { value: 'bug', label: 'Bug', icon: <Bug size={14} stroke="#EF4444" /> },
-  { value: 'docs', label: 'Docs', icon: <FileText size={14} stroke="#A78BFA" /> },
-  { value: 'feature', label: 'Feature', icon: <Sparkles size={14} stroke="#F59E0B" /> },
-  { value: 'task', label: 'Task', icon: <ListTodo size={14} stroke="#22C55E" /> },
-];
+type MtSelectOption = {
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
+};
 
-export function MtPrioritySelect({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+function isDiscreteValueOption(
+  value: string | MtCollectionDiscreteValueOption,
+): value is MtCollectionDiscreteValueOption {
+  return typeof value === 'object' && value !== null && 'value' in value;
+}
+
+function getDiscreteValueOption(
+  options: Array<string | MtCollectionDiscreteValueOption> | undefined,
+  value: string | undefined,
+) {
+  if (!options || !value) return undefined;
+  return options.find((option) => isDiscreteValueOption(option) && option.value === value) as
+    | MtCollectionDiscreteValueOption
+    | undefined;
+}
+
+export function getIssueTypeOption(
+  options: Array<string | MtCollectionDiscreteValueOption> | undefined,
+  value: string | undefined,
+) {
+  return getDiscreteValueOption(options, value);
+}
+
+export function MtIssueTypePreview({
+  value,
+  options,
+  size = 14,
+}: {
+  value?: string;
+  options?: Array<string | MtCollectionDiscreteValueOption>;
+  size?: number;
+}) {
+  const configuredOption = getIssueTypeOption(options, value);
+
+  if (configuredOption?.icon) {
+    return <MtIconPreview name={configuredOption.icon} size={size} color={configuredOption.color} />;
+  }
+
+  return <CircleHelp size={size} className="text-text-muted" />;
+}
+
+function titleCaseLabel(value: string) {
+  return value
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function normalizeOptions(
+  values: Array<string | MtCollectionDiscreteValueOption> | undefined,
+  fallback: MtSelectOption[],
+) {
+  if (!values || values.length === 0) {
+    return fallback;
+  }
+
+  const fallbackByValue = new Map(fallback.map((option) => [option.value, option]));
+  return values.map((value) => {
+    if (isDiscreteValueOption(value)) {
+      return {
+        value: value.value,
+        label: value.label ?? titleCaseLabel(value.value),
+        icon: value.icon ? <MtIconPreview name={value.icon} size={14} color={value.color} /> : undefined,
+      } satisfies MtSelectOption;
+    }
+
+    return fallbackByValue.get(value) ?? { value, label: titleCaseLabel(value) };
+  });
+}
+
+export function MtPrioritySelect({
+  value,
+  onChange,
+  options,
+}: {
+  value?: string;
+  onChange: (value: string) => void;
+  options?: Array<string | MtCollectionDiscreteValueOption>;
+}) {
   return (
     <MtSelect
       kind="icon"
@@ -49,14 +131,22 @@ export function MtPrioritySelect({ value, onChange }: { value?: string; onChange
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={PRIORITY_OPTIONS}
+      options={normalizeOptions(options, PRIORITY_OPTIONS)}
     />
   );
 }
 
 export const MtPrioirtySelect = MtPrioritySelect;
 
-export function MtStateSelect({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+export function MtStateSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value?: string;
+  onChange: (value: string) => void;
+  options?: Array<string | MtCollectionDiscreteValueOption>;
+}) {
   return (
     <MtSelect
       kind="icon"
@@ -64,12 +154,20 @@ export function MtStateSelect({ value, onChange }: { value?: string; onChange: (
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={STATUS_OPTIONS}
+      options={normalizeOptions(options, STATUS_OPTIONS)}
     />
   );
 }
 
-export function MtIssueTypeSelect({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+export function MtIssueTypeSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value?: string;
+  onChange: (value: string) => void;
+  options?: Array<string | MtCollectionDiscreteValueOption>;
+}) {
   return (
     <MtSelect
       kind="icon"
@@ -77,7 +175,7 @@ export function MtIssueTypeSelect({ value, onChange }: { value?: string; onChang
       placeholder="?"
       value={value}
       onValueChange={onChange}
-      options={ISSUE_TYPE_OPTIONS}
+      options={normalizeOptions(options, [])}
     />
   );
 }
@@ -86,17 +184,78 @@ export function MtCollectionSummaryInput({
   value,
   onChange,
   placeholder = 'Summary...',
+  className,
+  inputSize,
+  contentWidthCh,
+  autoWidth,
+  minAutoWidthPx = 80,
+  maxAutoWidthPx,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  className?: string;
+  inputSize?: number;
+  contentWidthCh?: number;
+  autoWidth?: boolean;
+  minAutoWidthPx?: number;
+  maxAutoWidthPx?: number;
 }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [autoWidthPx, setAutoWidthPx] = React.useState<number | undefined>(undefined);
+
+  React.useLayoutEffect(() => {
+    if (!autoWidth || !inputRef.current || typeof document === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
+
+    const input = inputRef.current;
+    const inputStyle = window.getComputedStyle(input);
+    const textToMeasure = value || placeholder || '';
+
+    const measure = document.createElement('span');
+    measure.style.position = 'absolute';
+    measure.style.visibility = 'hidden';
+    measure.style.whiteSpace = 'pre';
+    measure.style.font = inputStyle.font;
+    measure.style.fontSize = inputStyle.fontSize;
+    measure.style.fontWeight = inputStyle.fontWeight;
+    measure.style.letterSpacing = inputStyle.letterSpacing;
+    measure.textContent = textToMeasure;
+
+    document.body.appendChild(measure);
+
+    const textWidth = measure.getBoundingClientRect().width;
+    const horizontalPadding = (parseFloat(inputStyle.paddingLeft) || 0) + (parseFloat(inputStyle.paddingRight) || 0);
+    const horizontalBorder =
+      (parseFloat(inputStyle.borderLeftWidth) || 0) + (parseFloat(inputStyle.borderRightWidth) || 0);
+    const nextWidth = Math.ceil(textWidth + horizontalPadding + horizontalBorder + 2);
+
+    document.body.removeChild(measure);
+
+    const minClampedWidth = Math.max(minAutoWidthPx, nextWidth);
+    setAutoWidthPx(maxAutoWidthPx ? Math.min(maxAutoWidthPx, minClampedWidth) : minClampedWidth);
+  }, [autoWidth, maxAutoWidthPx, minAutoWidthPx, placeholder, value]);
+
+  const widthStyle = autoWidth
+    ? {
+        width: `${autoWidthPx ?? minAutoWidthPx}px`,
+        maxWidth: '100%',
+        minWidth: 0,
+      }
+    : contentWidthCh
+      ? { width: `${contentWidthCh}ch`, maxWidth: '100%', minWidth: 0 }
+      : undefined;
+
   return (
     <input
+      ref={inputRef}
       value={value}
+      size={inputSize}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-[#2A2A2A]"
+      style={widthStyle}
+      className={`w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-text-primary outline-none focus:border-[#2A2A2A] ${className ?? ''}`}
     />
   );
 }
@@ -108,10 +267,17 @@ export function MtCollectionAssigneeDropdown({
 }: {
   assignee?: string;
   options: MtCollectionAssigneeOption[];
-  onChange: (value: string) => void;
+  onChange: (value?: string) => void;
 }) {
   return (
-    <MtSelect kind="icon" variant="ghost" value={assignee} onValueChange={onChange}>
+    <MtSelect
+      kind="icon"
+      variant="ghost"
+      value={assignee}
+      placeholder="?"
+      onValueChange={(nextValue) => onChange(nextValue === '__unassigned__' ? undefined : nextValue)}
+    >
+      <MtSelectItem value="__unassigned__">Unassigned</MtSelectItem>
       {options.map((option) => (
         <MtSelectItem key={option.value} value={option.value} icon={<MtAvatar name={option.label} size="xs" />}>
           {option.label}
