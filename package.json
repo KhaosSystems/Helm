@@ -25,13 +25,15 @@
       "import": "./dist/experimental.js",
       "require": "./dist/experimental.cjs"
     },
+    "./tailwind.css": "./src/index.css",
     "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
   },
   "main": "./dist/matter.cjs",
   "types": "./dist/lib.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "dev": "vite",

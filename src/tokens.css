@@ -9,7 +9,7 @@
  * https://tailwindcss.com/docs/colors#customizing-your-colors
  */
 
-@theme {
+@theme static {
   /* Primitive tokens */
   --color-neutral-50: var(--color-missing);
   --color-neutral-100: var(--color-missing);

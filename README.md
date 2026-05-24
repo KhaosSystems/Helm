@@ -27,3 +27,31 @@ Install from workspace and import:
 import { MtButton } from '@khaos-systems/helm';
 import '@khaos-systems/helm/styles.css';
 ```
+
+### Tailwind-native consumption (recommended)
+
+For apps that already compile Tailwind, consume Helm through Tailwind so client
+builds generate only the utilities they use (including token-based classes like
+`bg-surface-panel`).
+
+In your app stylesheet (compiled by Tailwind):
+
+```css
+@import "tailwindcss";
+@import "@khaos-systems/helm/tailwind.css";
+```
+
+Notes:
+- `@khaos-systems/helm/tailwind.css` includes Helm tokens and `@source` rules
+	that point to Helm component source files.
+- Keep `tailwind.css` import in the app pipeline so utilities like `bg-...`,
+	`text-...`, and `border-...` are generated from Helm color tokens when used
+	by the app.
+
+### Precompiled CSS consumption
+
+If you are not compiling Tailwind in the client app, continue importing:
+
+```ts
+import '@khaos-systems/helm/styles.css';
+```

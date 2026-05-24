@@ -12,7 +12,7 @@
 @source "./**/*.{ts,tsx}";
 
 /**
- * Source inline to ensure that these utilities are included in the final CSS
+ * Source inline to ensure that custom Helm utilities are included in the final CSS
  * output, even if not directly used in the codebase. This is necessary because
  * these utilities are intended for use in user content (e.g., rich text editor
  * content) and may not be directly referenced in the codebase, which could lead

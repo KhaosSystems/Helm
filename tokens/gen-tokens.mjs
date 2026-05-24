@@ -46,11 +46,11 @@ async function buildTokens() {
     " * from Figma's Variables window: right click -> Export modes",
     ' * Then run: npm run gen:tokens',
     ' * ',
-    ' * For relevant Tailwind docs regarding costomizing colors, see:',
+    ' * For relevant Tailwind docs regarding customizing colors, see:',
     ' * https://tailwindcss.com/docs/colors#customizing-your-colors',
     ' */',
     '',
-    '@theme {',
+    '@theme static {',
   ];
 
   for (const group of groups) {

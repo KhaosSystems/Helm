@@ -143,7 +143,7 @@ export const CustomEntryRenderers: Story = {
 
 export const LotsOfEntries: Story = {
   args: {
-    entries: new Array(10000).fill(null).map((_, i) => ({
+    entries: new Array(100).fill(null).map((_, i) => ({
       id: String(i),
       name: `Entry ${i}`,
       status: i % 3 === 0 ? 'open' : i % 3 === 1 ? 'in progress' : 'backlog',
