@@ -1,6 +1,8 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 import React from 'react';
 
+import { MtTooltip } from './MtTooltip';
+
 type MtButtonSurface = 'default' | 'accent' | 'ghost' | 'panel';
 
 interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,6 +12,10 @@ interface MtButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'small' | 'medium' | 'large';
   variant?: MtButtonSurface;
   selected?: boolean;
+  tooltip?: ReactNode;
+  tooltipVariant?: 'info' | 'error';
+  tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
+  tooltipAlign?: 'start' | 'center' | 'end';
 }
 
 /**
@@ -24,6 +30,10 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
       variant = 'default',
       kind = 'default',
       selected = false,
+      tooltip,
+      tooltipVariant = 'info',
+      tooltipSide = 'top',
+      tooltipAlign = 'center',
       className,
       ...props
     },
@@ -51,8 +61,7 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
     const baseClasses = 'flex items-center gap-2 rounded transition-all duration-150';
 
     const layoutClasses = kind === 'icon' ? iconKindClasses[size] : defaultLayoutClasses[size];
-
-    return (
+    const button = (
       <button
         ref={ref}
         type={type}
@@ -62,6 +71,16 @@ const MtButtonBase = React.forwardRef<HTMLButtonElement, MtButtonProps>(
       >
         {children}
       </button>
+    );
+
+    if (!tooltip) {
+      return button;
+    }
+
+    return (
+      <MtTooltip content={tooltip} variant={tooltipVariant} side={tooltipSide} align={tooltipAlign}>
+        {button}
+      </MtTooltip>
     );
   },
 );
