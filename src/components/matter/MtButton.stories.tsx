@@ -37,6 +37,16 @@ export const Disabled: Story = {
   },
 };
 
+export const WithTooltip: Story = {
+  args: {
+    children: <span>Hover For Tooltip</span>,
+    tooltip: 'Sends your update to the channel',
+    tooltipSide: 'top',
+    tooltipAlign: 'center',
+    tooltipVariant: 'info',
+  },
+};
+
 export const Matrix: Story = {
   args: { children: <span>Button</span> },
   render: () => (

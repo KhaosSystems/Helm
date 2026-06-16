@@ -6,21 +6,14 @@ interface MtProgressProps {
 }
 
 export function MtProgress({ value, max = 100, className, barClassName }: MtProgressProps) {
-  const clamped = Math.min(Math.max(value, 0), max);
-  const percent = max > 0 ? (clamped / max) * 100 : 0;
+  const safeMax = max > 0 ? max : 100;
+  const clamped = Math.min(Math.max(value, 0), safeMax);
 
   return (
-    <div
-      className={`h-2 w-full overflow-hidden rounded-full bg-surface-subtle ${className || ''}`}
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={max}
-      aria-valuenow={clamped}
-    >
-      <div
-        className={`h-full rounded-full bg-blue-500 transition-[width] duration-300 ${barClassName || ''}`}
-        style={{ width: `${percent}%` }}
-      />
-    </div>
+    <progress
+      className={`h-2 w-full overflow-hidden rounded-full appearance-none bg-surface-subtle [&::-webkit-progress-bar]:bg-surface-subtle [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-blue-500 [&::-webkit-progress-value]:transition-all [&::-webkit-progress-value]:duration-300 [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-blue-500 ${className || ''} ${barClassName || ''}`}
+      max={safeMax}
+      value={clamped}
+    />
   );
 }
