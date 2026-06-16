@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Avatar, ContextMenu as RadixContextMenu } from "radix-ui";
+import { ContextMenu as RadixContextMenu } from "radix-ui";
 import { MtAvatar, MtButton, MtTextarea, WithContextMenu } from "@/lib";
 import {
     CornerUpLeft,
@@ -167,7 +167,7 @@ type MtChatMessageProps = {
     isForwarding?: boolean;
 };
 
-export function MtChatMessage({ isReplying = false, isForwarding = false }: MtChatMessageProps) {
+export function MtChatMessage({ isReplying = false }: MtChatMessageProps) {
     return (
         <WithContextMenu renderMenuItems={() => <MtChatMessageContextMenu />}>
             {({ openMenu }) => (
